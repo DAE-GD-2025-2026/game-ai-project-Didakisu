@@ -53,3 +53,30 @@ SteeringOutput Arrive::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
     return Steering;
 }
+
+SteeringOutput Face::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
+{
+    SteeringOutput Steering{};
+
+    auto direction = Target.Position - Agent.GetPosition();//get direction
+    auto desiredAngle = atan2(direction.Y , direction.X);//rad
+    auto currentOrientation = FMath::DegreesToRadians(Agent.GetActorRotation().Yaw);//yaw gives degrees
+    auto angleDifference = desiredAngle - currentOrientation;
+
+    Steering.AngularVelocity = FMath::RadiansToDegrees(angleDifference);
+
+    auto threshold = FMath::DegreesToRadians(1.f);
+
+    if (FMath::Abs(angleDifference) > threshold)
+    {
+        //apply linear velocity
+        direction.Normalize();//if we don't normalize it will move faster than 0,01
+        Steering.LinearVelocity = direction * 0.01f;
+    }
+    else //if it is already facing the target stop linear velocity
+    {
+        Steering.LinearVelocity = FVector2D::ZeroVector;
+    }
+
+    return Steering;
+}
