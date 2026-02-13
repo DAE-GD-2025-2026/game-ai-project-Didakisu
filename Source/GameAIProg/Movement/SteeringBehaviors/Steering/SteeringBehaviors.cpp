@@ -1,5 +1,7 @@
 #include "SteeringBehaviors.h"
 #include "GameAIProg/Movement/SteeringBehaviors/SteeringAgent.h"
+#include "Engine/World.h"
+#include "DrawDebugHelpers.h"
 
 //SEEK
 //*******
@@ -94,6 +96,56 @@ SteeringOutput Pursuit::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
     auto predictedPos = Target.Position + Target.LinearVelocity * t;
 
     auto direction = predictedPos - Agent.GetPosition();
+    Steering.LinearVelocity = direction;
+
+    return Steering;
+}
+
+SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
+{
+    SteeringOutput Steering{};
+
+    FVector2D toTarget = Target.Position - Agent.GetPosition();
+    float distance = toTarget.Length();
+
+    auto t = distance / Agent.GetMaxLinearSpeed(); //time to reach the target based on agent's(pursuer) speed
+
+    auto predictedPos = Target.Position + Target.LinearVelocity * t;
+
+    auto direction = Agent.GetPosition() - predictedPos;
+    Steering.LinearVelocity = direction;
+
+    return Steering;
+}
+
+SteeringOutput Wander::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
+{
+    SteeringOutput Steering{};
+
+    //const UWorld* InWorld = Agent.GetWorld();
+    
+    float radius = 100.0f;
+    //const FColor color = FColor::Red;
+
+    //FVector yAxis = FVector(0,0,1);
+    //FVector zAxis = FVector(0,0,1);
+
+    FVector forwardDirection = Agent.GetVelocity().GetSafeNormal(); //get the direction of the agent
+    FVector2D realForwardDirection = { forwardDirection.X , forwardDirection.Y};
+
+    FVector2D point = Agent.GetPosition() + (realForwardDirection * m_ForwardDistance);
+    FVector threeDPoint = { point.X , point.Y , 50.f };
+
+    //DrawDebugCircle(InWorld, threeDPoint, radius, 32, color, false, -1.0f, 0, 0.f, yAxis, zAxis);
+
+    double theta = ((double)rand() / RAND_MAX) * 2.0 * PI; //get a random num betwen 0 and 2pi
+
+    FVector2D offset;//creating a point that lies on the circle
+    offset.X = radius * cos(theta);
+    offset.Y = radius * sin(theta);
+
+    auto wanderTarget = offset + point;
+    auto direction = wanderTarget - Agent.GetPosition();
     Steering.LinearVelocity = direction;
 
     return Steering;
