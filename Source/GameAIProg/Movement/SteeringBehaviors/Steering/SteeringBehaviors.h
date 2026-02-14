@@ -58,7 +58,7 @@ public:
 
 private:
 	float m_SlowRadius = 300.f;
-	float m_TargetRadius = 30.f;
+	float m_TargetRadius = 50.f;
 	float m_OriginalMaxSpeed = -1.f;
 };
 
@@ -102,6 +102,6 @@ public:
 	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
 
 private:
-	int m_ForwardDistance = 100.f;
+	int m_ForwardDistance = 400.f;
 };
 

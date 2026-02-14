@@ -28,14 +28,24 @@ SteeringOutput Flee::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 SteeringOutput Arrive::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
     SteeringOutput Steering{};
+    const UWorld* InWorld = Agent.GetWorld();
 
     if (m_OriginalMaxSpeed < 0.f)
     {
         m_OriginalMaxSpeed = Agent.GetMaxLinearSpeed();
     }
 
+    FVector yAxis = FVector(1, 0, 0);
+    FVector zAxis = FVector(0, 1, 0);
+    FVector targetPoint = FVector(Target.Position.X , Target.Position.Y , 0);
+
     FVector2D toTarget = Target.Position - Agent.GetPosition();
     float distance = toTarget.Length();
+    FVector center = { Agent.GetPosition().X , Agent.GetPosition().Y , 0};
+
+    DrawDebugCircle(InWorld, center, m_SlowRadius, 32, FColor::Blue, false, -1.0f, 0, 0.f, yAxis , zAxis);
+    DrawDebugCircle(InWorld, center, m_TargetRadius, 32, FColor::Red, false, -1.0f, 0, 0.f , yAxis , zAxis);
+    DrawDebugPoint(InWorld, targetPoint , 10, FColor::Magenta);
 
     if (distance <= m_TargetRadius)
     {
@@ -87,6 +97,7 @@ SteeringOutput Pursuit::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
     //agent is pursuer
     SteeringOutput Steering{};
+    const UWorld* InWorld = Agent.GetWorld();
 
     FVector2D toTarget = Target.Position - Agent.GetPosition();
     float distance = toTarget.Length();
@@ -97,6 +108,11 @@ SteeringOutput Pursuit::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
     auto direction = predictedPos - Agent.GetPosition();
     Steering.LinearVelocity = direction;
+
+    FVector lineStart = { Agent.GetPosition().X , Agent.GetPosition().Y , 0 };
+    FVector lineEnd = { predictedPos.X , predictedPos.Y , 0 };
+
+    DrawDebugLine(InWorld , lineStart , lineEnd , FColor::Cyan);
 
     return Steering;
 }
@@ -122,13 +138,13 @@ SteeringOutput Wander::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 {
     SteeringOutput Steering{};
 
-    //const UWorld* InWorld = Agent.GetWorld();
+    const UWorld* InWorld = Agent.GetWorld();
     
     float radius = 100.0f;
-    //const FColor color = FColor::Red;
+    const FColor color = FColor::Red;
 
-    //FVector yAxis = FVector(0,0,1);
-    //FVector zAxis = FVector(0,0,1);
+    FVector yAxis = FVector(1,0,0);
+    FVector zAxis = FVector(0,1,0);
 
     FVector forwardDirection = Agent.GetVelocity().GetSafeNormal(); //get the direction of the agent
     FVector2D realForwardDirection = { forwardDirection.X , forwardDirection.Y};
@@ -136,7 +152,7 @@ SteeringOutput Wander::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
     FVector2D point = Agent.GetPosition() + (realForwardDirection * m_ForwardDistance);
     FVector threeDPoint = { point.X , point.Y , 50.f };
 
-    //DrawDebugCircle(InWorld, threeDPoint, radius, 32, color, false, -1.0f, 0, 0.f, yAxis, zAxis);
+    DrawDebugCircle(InWorld, threeDPoint, radius, 32, color, false, -1.0f, 0, 0.f, yAxis, zAxis);
 
     double theta = ((double)rand() / RAND_MAX) * 2.0 * PI; //get a random num betwen 0 and 2pi
 
@@ -146,6 +162,13 @@ SteeringOutput Wander::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
 
     auto wanderTarget = offset + point;
     auto direction = wanderTarget - Agent.GetPosition();
+
+    FVector lineStart = { Agent.GetPosition().X , Agent.GetPosition().Y , 0 };
+    FVector lineEnd = { wanderTarget.X , wanderTarget.Y , 0 };
+
+    DrawDebugLine(InWorld, lineStart, lineEnd, color, false, -1.0f, 0, 0.0f );//the vector pointing from the agent to the wander traget
+    DrawDebugPoint(InWorld, lineEnd, 10, FColor::Green);
+
     Steering.LinearVelocity = direction;
 
     return Steering;
