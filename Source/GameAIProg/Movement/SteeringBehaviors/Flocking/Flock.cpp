@@ -22,8 +22,8 @@ Flock::Flock(
 
 	for (int i = 0; i < FlockSize; i++)
 	{
-		FVector spawnPos{ 0.f , 0.f , 0.f }; //for now for simplicity all of them will spawn at this location
-
+		FVector spawnPos{ 0.f , 90.f , 0.f }; //for now for simplicity all of them will spawn at this location
+	
 		//now spawn the agent actor
 		ASteeringAgent* agent = pWorld->SpawnActor<ASteeringAgent>(AgentClass, spawnPos, FRotator::ZeroRotator);
 
@@ -32,6 +32,13 @@ Flock::Flock(
 			pAgents[i] = agent; //store each agent in the array
 		}
 	}
+
+	pSeparationBehavior = std::make_unique<Separation>(this);
+	pCohesionBehavior = std::make_unique<Cohesion>(this);
+	pVelMatchBehavior = std::make_unique<VelocityMatch>(this);
+
+	pSeekBehavior = std::make_unique<Seek>();
+	pWanderBehavior = std::make_unique<Wander>();
 
     // TODO: initialize the flock and the memory pool
 }
@@ -46,12 +53,15 @@ void Flock::Tick(float DeltaTime)
 	for (int i = 0; i < pAgents.Num() ; i++)
 	{
 		ASteeringAgent*agent = pAgents[i];
+		if (!agent) continue;
+
 		RegisterNeighbors(agent);
+
+		if (pCohesionBehavior)
+		{
+			agent->SetSteeringBehavior(pCohesionBehavior.get());
+		}
 	}
-
-
-
-
   // TODO: update the flock
   // TODO: for every agent:
   // TODO: register the neighbors for this agent (-> fill the memory pool with the neighbors for the currently evaluated agent)
@@ -62,6 +72,7 @@ void Flock::Tick(float DeltaTime)
 void Flock::RenderDebug()
 {
  // TODO: Render all the agents in the flock
+	RenderNeighborhood();
 }
 
 void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
@@ -103,6 +114,10 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 		ImGui::Spacing();
 
   // TODO: implement ImGUI checkboxes for debug rendering here
+		ImGui::Text("Debug Rendering");
+		ImGui::Checkbox("Render Steering", &DebugRenderSteering);
+		ImGui::Checkbox("Render Neighbors", &DebugRenderNeighborhood);
+		ImGui::Checkbox("Render Partitions", &DebugRenderPartitions);
 
 		ImGui::Text("Behavior Weights");
 		ImGui::Spacing();
@@ -118,6 +133,26 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 void Flock::RenderNeighborhood()
 {
  // TODO: Debugrender the neighbors for the first agent in the flock
+
+	//neighbord have a pink sphere over them
+	if (!DebugRenderNeighborhood)
+	{
+		return;
+	}
+
+	if (!pAgents[0] || pAgents.Num() == 0)
+	{
+		return;
+	}
+
+	ASteeringAgent* firstAgent = pAgents[0];
+	RegisterNeighbors(firstAgent);
+
+	for (int i = 0; i < pNeighbors.Num(); i++)
+	{
+		if (!pNeighbors[i]) continue;
+		DrawDebugSphere(pWorld, pNeighbors[i]->GetActorLocation(), 15.f, 8, FColor::Magenta, false, -1.f, 0, 2.f); 
+	}
 }
 
 #ifndef GAMEAI_USE_SPACE_PARTITIONING
@@ -130,11 +165,16 @@ void Flock::RegisterNeighbors(ASteeringAgent* const pAgent)
 
 	//clear previos neighbors and reset the neighbor count
 	pNeighbors.Empty();
-	m_NrOfNeighbors = 0;
 	
+	if (!pAgent)
+	{
+		m_NrOfNeighbors = 0;
+		return;
+	}
+
 	for (int i = 0; i < pAgents.Num(); i++)
 	{
-		if (pAgents[i] == pAgent) //skip myself
+		if (pAgents[i] == nullptr ||pAgents[i] == pAgent) //skip myself
 		{
 			continue;
 		}
@@ -184,4 +224,3 @@ void Flock::SetTarget_Seek(FSteeringParams const& Target)
 {
  // TODO: Implement
 }
-

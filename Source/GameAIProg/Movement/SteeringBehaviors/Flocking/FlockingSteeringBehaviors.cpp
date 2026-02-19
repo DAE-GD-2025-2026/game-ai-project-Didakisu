@@ -53,7 +53,7 @@ SteeringOutput Separation::CalculateSteering(float deltaT, ASteeringAgent& pAgen
 //*************************
 //VELOCITY MATCH (FLOCKING)
 
-SteeringOutput Alignment::CalculateSteering(float deltaT, ASteeringAgent& pAgent)
+SteeringOutput VelocityMatch::CalculateSteering(float deltaT, ASteeringAgent& pAgent)
 {
     SteeringOutput Steering{};
 
