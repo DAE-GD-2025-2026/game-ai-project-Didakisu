@@ -22,7 +22,9 @@ Flock::Flock(
 
 	for (int i = 0; i < FlockSize; i++)
 	{
-		FVector spawnPos{ 0.f , 90.f , 0.f }; //for now for simplicity all of them will spawn at this location
+		float spawnPosX = FMath::RandRange(-WorldSize, WorldSize);
+		float spawnPosY = FMath::RandRange(-WorldSize, WorldSize);
+		FVector spawnPos{ spawnPosX , spawnPosY , 0.f };
 	
 		//now spawn the agent actor
 		ASteeringAgent* agent = pWorld->SpawnActor<ASteeringAgent>(AgentClass, spawnPos, FRotator::ZeroRotator);
@@ -40,12 +42,26 @@ Flock::Flock(
 	pSeekBehavior = std::make_unique<Seek>();
 	pWanderBehavior = std::make_unique<Wander>();
 
+	pBlendedSteering = std::make_unique<BlendedSteering>(std::vector<BlendedSteering::WeightedBehavior>{
+		{ pSeparationBehavior.get(), 0.9f},
+		{ pCohesionBehavior.get() , 0.1f },
+		{ pVelMatchBehavior.get() , 0.f }
+	});
+
     // TODO: initialize the flock and the memory pool
 }
 
 Flock::~Flock()
 {
  // TODO: Cleanup any additional data
+	for (int i = 0; i < FlockSize; i++)
+	{
+		if (pAgents[i])
+		{
+			pAgents[i]->Destroy();
+		}
+		
+	}
 }
 
 void Flock::Tick(float DeltaTime)
@@ -57,9 +73,9 @@ void Flock::Tick(float DeltaTime)
 
 		RegisterNeighbors(agent);
 
-		if (pCohesionBehavior)
+		if (pBlendedSteering)
 		{
-			agent->SetSteeringBehavior(pCohesionBehavior.get());
+			agent->SetSteeringBehavior(pBlendedSteering.get());
 		}
 	}
   // TODO: update the flock

@@ -26,8 +26,9 @@ SteeringOutput Separation::CalculateSteering(float deltaT, ASteeringAgent& pAgen
     auto neighbors = pFlock->GetNeighbors();
     FVector2D totalPushes = FVector2D::ZeroVector;
 
-    for (int i = 0; i < pFlock->GetNrOfNeighbors(); i++)
+    for (int i = 0; i < neighbors.Num(); i++)
     {
+        if (!neighbors[i]) continue;
         FVector2D awayVec = pAgent.GetPosition() - neighbors[i]->GetPosition();//points from the neighbor to the agent 
         //the closer the neighbor, the stronger the push away
         //close neighbor == big push
