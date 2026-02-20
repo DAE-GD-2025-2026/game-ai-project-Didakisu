@@ -43,8 +43,8 @@ Flock::Flock(
 	pWanderBehavior = std::make_unique<Wander>();
 
 	pBlendedSteering = std::make_unique<BlendedSteering>(std::vector<BlendedSteering::WeightedBehavior>{
-		{ pSeparationBehavior.get(), 0.9f},
-		{ pCohesionBehavior.get() , 0.1f },
+		{ pSeparationBehavior.get(), 2.f},
+		{ pCohesionBehavior.get() , 0.f },
 		{ pVelMatchBehavior.get() , 0.f }
 	});
 
@@ -72,8 +72,12 @@ void Flock::Tick(float DeltaTime)
 		if (!agent) continue;
 
 		RegisterNeighbors(agent);
-
-		if (pBlendedSteering)
+		
+		if(i == 0 && pSeekBehavior)
+		{
+			agent->SetSteeringBehavior(pSeekBehavior.get());
+		}
+		else if (pBlendedSteering)
 		{
 			agent->SetSteeringBehavior(pBlendedSteering.get());
 		}
@@ -238,5 +242,8 @@ FVector2D Flock::GetAverageNeighborVelocity() const
 
 void Flock::SetTarget_Seek(FSteeringParams const& Target)
 {
- // TODO: Implement
+	if (pSeekBehavior)
+	{
+		pSeekBehavior->SetTarget(Target);
+	}
 }

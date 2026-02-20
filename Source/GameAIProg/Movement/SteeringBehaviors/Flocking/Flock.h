@@ -58,7 +58,7 @@ private:
 	TArray<ASteeringAgent*> pNeighbors{};
 #endif // USE_SPACE_PARTITIONING
 	
-	float m_NeighborhoodRadius{200.f};
+	float m_NeighborhoodRadius{400.f};
 	int m_NrOfNeighbors{0};
 
 	ASteeringAgent* pAgentToEvade{nullptr};

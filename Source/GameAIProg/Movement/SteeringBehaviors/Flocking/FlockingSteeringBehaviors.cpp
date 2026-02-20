@@ -37,16 +37,20 @@ SteeringOutput Separation::CalculateSteering(float deltaT, ASteeringAgent& pAgen
         //we use 1/distance , becasue when distance is small(example 1)=> 1/1 is 1 , which is big push
         //and when the distance is big (for example 10) => 1/10 = 0.1, which is small push
         float distance = awayVec.Length();
+        if (distance < 0.1f)
+        {
+            distance = 0.1f;
+        }
         float inverseDistance = 1 / distance;
 
-        FVector2D pushVec = awayVec * inverseDistance;
+        FVector2D pushVec = awayVec.GetSafeNormal() * inverseDistance * 50.f;//scale
         totalPushes += pushVec;
 
         //the agent must feel the pushes from each neighbor together, so we add all puehs
     }
     //and then scale that vector inversely to how close it is
     //after we have added all these forces together, we will set the magnitude to max_force
-    Steering.LinearVelocity = totalPushes;
+    Steering.LinearVelocity = totalPushes.GetClampedToMaxSize(pAgent.GetMaxLinearSpeed());
 
     return Steering;
 }

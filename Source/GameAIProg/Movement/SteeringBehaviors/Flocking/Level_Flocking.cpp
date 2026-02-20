@@ -36,9 +36,11 @@ void ALevel_Flocking::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	pFlock->ImGuiRender(WindowPos, WindowSize);
-	pFlock->Tick(DeltaTime);
-	pFlock->RenderDebug();
 	if (bUseMouseTarget)
 		pFlock->SetTarget_Seek(MouseTarget);
+	pFlock->Tick(DeltaTime);
+	pFlock->RenderDebug();
+	/*if (bUseMouseTarget)
+		pFlock->SetTarget_Seek(MouseTarget);*/
 }
 
