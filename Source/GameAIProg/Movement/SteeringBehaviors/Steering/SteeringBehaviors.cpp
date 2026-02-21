@@ -124,6 +124,14 @@ SteeringOutput Evade::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
     FVector2D toTarget = Target.Position - Agent.GetPosition();
     float distance = toTarget.Length();
 
+    if (distance > m_EvadeRadius)
+    {
+        Steering.IsValid = false;
+        return Steering;
+    }
+
+    Steering.IsValid = true;
+
     auto t = distance / Agent.GetMaxLinearSpeed(); //time to reach the target based on agent's(pursuer) speed
 
     auto predictedPos = Target.Position + Target.LinearVelocity * t;

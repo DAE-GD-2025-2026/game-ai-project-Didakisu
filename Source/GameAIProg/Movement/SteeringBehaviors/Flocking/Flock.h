@@ -58,7 +58,7 @@ private:
 	TArray<ASteeringAgent*> pNeighbors{};
 #endif // USE_SPACE_PARTITIONING
 	
-	float m_NeighborhoodRadius{400.f};
+	float m_NeighborhoodRadius{200.f};
 	int m_NrOfNeighbors{0};
 
 	ASteeringAgent* pAgentToEvade{nullptr};
@@ -69,7 +69,7 @@ private:
 	std::unique_ptr<VelocityMatch> pVelMatchBehavior{};
 	std::unique_ptr<Seek> pSeekBehavior{};
 	std::unique_ptr<Wander> pWanderBehavior{};
-	//std::unique_ptr<Evade> pEvadeBehavior{};
+	std::unique_ptr<Evade> pEvadeBehavior{};
 	
 	std::unique_ptr<BlendedSteering> pBlendedSteering{};
 	std::unique_ptr<PrioritySteering> pPrioritySteering{};

@@ -90,6 +90,10 @@ public:
 
 	//steering
 	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
+	void SetEvadeRadius(float radius) { m_EvadeRadius = radius; }
+	float GetEvadeRadius() { return m_EvadeRadius; }
+private:
+	float m_EvadeRadius{200.f};
 };
 
 class Wander : public ISteeringBehavior

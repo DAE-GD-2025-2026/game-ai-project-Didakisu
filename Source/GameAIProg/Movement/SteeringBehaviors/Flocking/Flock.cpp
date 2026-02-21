@@ -35,18 +35,38 @@ Flock::Flock(
 		}
 	}
 
+	if (!pAgentToEvade)
+	{
+		
+		FVector spawnPos{ 0.f , 90.f , 0.f }; 
+
+		ASteeringAgent * agent = pWorld->SpawnActor<ASteeringAgent>(AgentClass, spawnPos, FRotator::ZeroRotator);
+
+		if (agent)
+		{
+			this->pAgentToEvade = agent;
+			DrawDebugSphere(pWorld, this->pAgentToEvade->GetActorLocation(), 15.f, 8, FColor::Red, false, -1.f, true);
+		}
+	}
+
 	pSeparationBehavior = std::make_unique<Separation>(this);
 	pCohesionBehavior = std::make_unique<Cohesion>(this);
 	pVelMatchBehavior = std::make_unique<VelocityMatch>(this);
 
 	pSeekBehavior = std::make_unique<Seek>();
 	pWanderBehavior = std::make_unique<Wander>();
+	pEvadeBehavior = std::make_unique<Evade>();
+	pEvadeBehavior->SetEvadeRadius(200.f);
 
-	pBlendedSteering = std::make_unique<BlendedSteering>(std::vector<BlendedSteering::WeightedBehavior>{
+	//blended
+	/*pBlendedSteering = std::make_unique<BlendedSteering>(std::vector<BlendedSteering::WeightedBehavior>{
 		{ pSeparationBehavior.get(), 2.f},
-		{ pCohesionBehavior.get() , 0.f },
-		{ pVelMatchBehavior.get() , 0.f }
-	});
+		{ pCohesionBehavior.get() , 5.f },
+		{ pVelMatchBehavior.get() , 3.f }
+	});*/
+
+	//priority
+	pPrioritySteering = std::make_unique<PrioritySteering>(std::vector<ISteeringBehavior*> {pEvadeBehavior.get(), pWanderBehavior.get()});
 
     // TODO: initialize the flock and the memory pool
 }
@@ -60,12 +80,20 @@ Flock::~Flock()
 		{
 			pAgents[i]->Destroy();
 		}
-		
 	}
 }
 
 void Flock::Tick(float DeltaTime)
 {
+	if (pEvadeBehavior && pAgentToEvade)
+	{
+		FSteeringParams evadeParams;
+		evadeParams.Position = pAgentToEvade->GetPosition();
+		pEvadeBehavior->SetTarget(evadeParams);
+
+		DrawDebugCircle(pWorld, pAgentToEvade->GetActorLocation(), pEvadeBehavior->GetEvadeRadius(), 32, FColor::Yellow, false, -1.f, 0, 2.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
+	}
+
 	for (int i = 0; i < pAgents.Num() ; i++)
 	{
 		ASteeringAgent*agent = pAgents[i];
@@ -73,14 +101,23 @@ void Flock::Tick(float DeltaTime)
 
 		RegisterNeighbors(agent);
 		
-		if(i == 0 && pSeekBehavior)
+	 /*	if(i == 0 && pSeekBehavior)
 		{
 			agent->SetSteeringBehavior(pSeekBehavior.get());
-		}
-		else if (pBlendedSteering)
+		}*/
+		/*if (pBlendedSteering)
 		{
 			agent->SetSteeringBehavior(pBlendedSteering.get());
+		}*/
+		if (pPrioritySteering)
+		{
+			agent->SetSteeringBehavior(pPrioritySteering.get());
 		}
+	}
+
+	if (pAgentToEvade)
+	{
+		DrawDebugSphere(pWorld, pAgentToEvade->GetActorLocation(), 15.f, 8, FColor::Red, false, -1.f, 0, 2.f);
 	}
   // TODO: update the flock
   // TODO: for every agent:
