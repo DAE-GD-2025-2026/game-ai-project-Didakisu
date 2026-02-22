@@ -70,4 +70,7 @@ public:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	void SetSteeringBehavior(ISteeringBehavior* NewSteeringBehavior);
+	const SteeringOutput& GetLastSteeringOutput() const { return m_LastSteeringOutput; }
+private:
+	SteeringOutput m_LastSteeringOutput;
 };

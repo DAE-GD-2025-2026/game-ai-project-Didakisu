@@ -59,14 +59,14 @@ Flock::Flock(
 	pEvadeBehavior->SetEvadeRadius(200.f);
 
 	//blended
-	/*pBlendedSteering = std::make_unique<BlendedSteering>(std::vector<BlendedSteering::WeightedBehavior>{
-		{ pSeparationBehavior.get(), 2.f},
-		{ pCohesionBehavior.get() , 5.f },
-		{ pVelMatchBehavior.get() , 3.f }
-	});*/
+	pBlendedSteering = std::make_unique<BlendedSteering>(std::vector<BlendedSteering::WeightedBehavior>{
+		{ pSeparationBehavior.get(), 0.2f},
+		{ pCohesionBehavior.get() , 0.5f },
+		{ pVelMatchBehavior.get() , 0.3f }
+	});
 
 	//priority
-	pPrioritySteering = std::make_unique<PrioritySteering>(std::vector<ISteeringBehavior*> {pEvadeBehavior.get(), pWanderBehavior.get()});
+	pPrioritySteering = std::make_unique<PrioritySteering>(std::vector<ISteeringBehavior*> {pEvadeBehavior.get(), pBlendedSteering.get()});
 
     // TODO: initialize the flock and the memory pool
 }
@@ -101,7 +101,7 @@ void Flock::Tick(float DeltaTime)
 
 		RegisterNeighbors(agent);
 		
-	 /*	if(i == 0 && pSeekBehavior)
+	    /*if(i == 0 && pSeekBehavior)
 		{
 			agent->SetSteeringBehavior(pSeekBehavior.get());
 		}*/
@@ -119,6 +119,8 @@ void Flock::Tick(float DeltaTime)
 	{
 		DrawDebugSphere(pWorld, pAgentToEvade->GetActorLocation(), 15.f, 8, FColor::Red, false, -1.f, 0, 2.f);
 	}
+
+
   // TODO: update the flock
   // TODO: for every agent:
   // TODO: register the neighbors for this agent (-> fill the memory pool with the neighbors for the currently evaluated agent)
@@ -130,6 +132,23 @@ void Flock::RenderDebug()
 {
  // TODO: Render all the agents in the flock
 	RenderNeighborhood();
+
+	if (DebugRenderSteering)
+	{
+		for (int i = 0; i < pAgents.Num(); i++)
+		{
+			ASteeringAgent* agent = pAgents[i];
+			if (!agent) continue;
+
+			const SteeringOutput& steering = agent->GetLastSteeringOutput();
+			FVector start = agent->GetActorLocation();
+
+			FVector steeringVector(steering.LinearVelocity.X, steering.LinearVelocity.Y, 0.f);
+
+			FVector end = start + steeringVector * 50.f;
+			DrawDebugLine(pWorld, start, end, FColor::Green);
+		}
+	}
 }
 
 void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
@@ -172,6 +191,7 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 
   // TODO: implement ImGUI checkboxes for debug rendering here
 		ImGui::Text("Debug Rendering");
+
 		ImGui::Checkbox("Render Steering", &DebugRenderSteering);
 		ImGui::Checkbox("Render Neighbors", &DebugRenderNeighborhood);
 		ImGui::Checkbox("Render Partitions", &DebugRenderPartitions);
@@ -189,7 +209,7 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 
 void Flock::RenderNeighborhood()
 {
- // TODO: Debugrender the neighbors for the first agent in the flock
+	// TODO: Debugrender the neighbors for the first agent in the flock
 
 	//neighbord have a pink sphere over them
 	if (!DebugRenderNeighborhood)
@@ -208,8 +228,9 @@ void Flock::RenderNeighborhood()
 	for (int i = 0; i < pNeighbors.Num(); i++)
 	{
 		if (!pNeighbors[i]) continue;
-		DrawDebugSphere(pWorld, pNeighbors[i]->GetActorLocation(), 15.f, 8, FColor::Magenta, false, -1.f, 0, 2.f); 
+		DrawDebugSphere(pWorld, pNeighbors[i]->GetActorLocation(), 15.f, 8, FColor::Magenta, false, -1.f, 0, 2.f);
 	}
+
 }
 
 #ifndef GAMEAI_USE_SPACE_PARTITIONING
