@@ -217,18 +217,21 @@ void Flock::RenderNeighborhood()
 		return;
 	}
 
-	if (!pAgents[0] || pAgents.Num() == 0)
+	if (pAgents.Num() == 0 || !pAgents[0])
 	{
 		return;
 	}
 
 	ASteeringAgent* firstAgent = pAgents[0];
 	RegisterNeighbors(firstAgent);
+	//draw neigborhood radius
+	DrawDebugCircle(pWorld, firstAgent->GetActorLocation(), m_NeighborhoodRadius, 32, FColor::Magenta ,false, -1.f, 0, 2.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
 
 	for (int i = 0; i < pNeighbors.Num(); i++)
 	{
 		if (!pNeighbors[i]) continue;
 		DrawDebugSphere(pWorld, pNeighbors[i]->GetActorLocation(), 15.f, 8, FColor::Magenta, false, -1.f, 0, 2.f);
+		DrawDebugLine(pWorld, firstAgent->GetActorLocation(), pNeighbors[i]->GetActorLocation(), FColor::Magenta);//line from first agent to neighbors
 	}
 
 }

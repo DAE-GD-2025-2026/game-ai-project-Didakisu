@@ -77,8 +77,9 @@ private:
 	// UI and rendering
 	bool DebugRenderSteering{false};
 	bool DebugRenderNeighborhood{true};
+
+
 	bool DebugRenderPartitions{true};
-	//bool DebugRenderEvadeCircle{ false };
 
 	void RenderNeighborhood();
 };
