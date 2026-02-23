@@ -289,6 +289,11 @@ void Flock::RegisterNeighbors(ASteeringAgent* const pAgent)
 
 FVector2D Flock::GetAverageNeighborPos() const
 {
+	if (m_NrOfNeighbors == 0)
+	{
+		return FVector2D::ZeroVector;
+	}
+
 	FVector2D avgPosition = FVector2D::ZeroVector;
 
 	for (int i = 0; i < pNeighbors.Num(); i++)
