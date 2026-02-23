@@ -70,6 +70,12 @@ private:
 	std::unique_ptr<Seek> pSeekBehavior{};
 	std::unique_ptr<Wander> pWanderBehavior{};
 	std::unique_ptr<Evade> pEvadeBehavior{};
+
+	float m_SeparationWeight{ 0.2f };
+	float m_CohesionWeight{ 0.4f };
+	float m_VelMatchWeight{ 0.2f };
+	float m_SeekWeight{0.f};
+	float m_WanderWeight{0.f};
 	
 	std::unique_ptr<BlendedSteering> pBlendedSteering{};
 	std::unique_ptr<PrioritySteering> pPrioritySteering{};

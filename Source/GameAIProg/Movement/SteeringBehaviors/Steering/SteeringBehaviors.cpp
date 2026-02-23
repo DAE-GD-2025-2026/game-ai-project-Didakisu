@@ -160,7 +160,7 @@ SteeringOutput Wander::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
     FVector2D point = Agent.GetPosition() + (realForwardDirection * m_ForwardDistance);
     FVector threeDPoint = { point.X , point.Y , 50.f };
 
-    DrawDebugCircle(InWorld, threeDPoint, radius, 32, color, false, -1.0f, 0, 0.f, yAxis, zAxis);
+    //DrawDebugCircle(InWorld, threeDPoint, radius, 32, color, false, -1.0f, 0, 0.f, yAxis, zAxis);
 
     double theta = ((double)rand() / RAND_MAX) * 2.0 * PI; //get a random num betwen 0 and 2pi
 
@@ -174,8 +174,8 @@ SteeringOutput Wander::CalculateSteering(float DeltaT, ASteeringAgent& Agent)
     FVector lineStart = { Agent.GetPosition().X , Agent.GetPosition().Y , 0 };
     FVector lineEnd = { wanderTarget.X , wanderTarget.Y , 0 };
 
-    DrawDebugLine(InWorld, lineStart, lineEnd, color, false, -1.0f, 0, 0.0f );//the vector pointing from the agent to the wander traget
-    DrawDebugPoint(InWorld, lineEnd, 10, FColor::Green);
+    //DrawDebugLine(InWorld, lineStart, lineEnd, color, false, -1.0f, 0, 0.0f );//the vector pointing from the agent to the wander traget
+    //DrawDebugPoint(InWorld, lineEnd, 10, FColor::Green);
 
     Steering.LinearVelocity = direction;
 

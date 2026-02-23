@@ -60,9 +60,11 @@ Flock::Flock(
 
 	//blended
 	pBlendedSteering = std::make_unique<BlendedSteering>(std::vector<BlendedSteering::WeightedBehavior>{
-		{ pSeparationBehavior.get(), 0.2f},
-		{ pCohesionBehavior.get() , 0.5f },
-		{ pVelMatchBehavior.get() , 0.3f }
+		{ pSeparationBehavior.get(), m_SeparationWeight},
+		{ pCohesionBehavior.get() , m_CohesionWeight },
+		{ pVelMatchBehavior.get() , m_VelMatchWeight },
+		{ pSeekBehavior.get() , m_SeekWeight },
+		{ pWanderBehavior.get() , m_WanderWeight }
 	});
 
 	//priority
@@ -117,6 +119,7 @@ void Flock::Tick(float DeltaTime)
 
 	if (pAgentToEvade)
 	{
+		pAgentToEvade->SetSteeringBehavior(pWanderBehavior.get());
 		DrawDebugSphere(pWorld, pAgentToEvade->GetActorLocation(), 15.f, 8, FColor::Red, false, -1.f, 0, 2.f);
 	}
 
@@ -197,6 +200,18 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 		ImGui::Checkbox("Render Partitions", &DebugRenderPartitions);
 
 		ImGui::Text("Behavior Weights");
+		//sliders
+		if (pBlendedSteering)
+		{
+			auto& behaviors = pBlendedSteering->GetWeightedBehaviorsRef();
+
+			ImGui::SliderFloat("Separation Value", &behaviors[0].Weight, 0.f, 5.f);
+			ImGui::SliderFloat("Cohesion Value", &behaviors[1].Weight, 0.f, 5.f);
+			ImGui::SliderFloat("Velocity Match Value", &behaviors[2].Weight, 0.f, 5.f);
+			ImGui::SliderFloat("Seek Value", &behaviors[3].Weight, 0.f, 5.f);
+			ImGui::SliderFloat("Wander Value", &behaviors[4].Weight, 0.f, 5.f);
+		}
+
 		ImGui::Spacing();
 
   // TODO: implement ImGUI sliders for steering behavior weights here
@@ -246,6 +261,7 @@ void Flock::RegisterNeighbors(ASteeringAgent* const pAgent)
 
 	//clear previos neighbors and reset the neighbor count
 	pNeighbors.Empty();
+	m_NrOfNeighbors = 0;
 	
 	if (!pAgent)
 	{
