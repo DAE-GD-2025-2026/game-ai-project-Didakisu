@@ -48,13 +48,24 @@ CellSpace::CellSpace(UWorld* pWorld, float Width, float Height, int Rows, int Co
 
 void CellSpace::AddAgent(ASteeringAgent& Agent)
 {
-	// TODO Add the agent to the correct cell
+	FVector2D agentPos = Agent.GetPosition();
+	auto indx = PositionToIndex(agentPos);
+
+	Cells[indx].Agents.push_back(&Agent);
 }
 
 void CellSpace::UpdateAgentCell(ASteeringAgent& Agent, const FVector2D& OldPos)
 {
-	//TODO Check if the agent needs to be moved to another cell.
-	//TODO Use the calculated index for oldPos and currentPos for this
+	auto currPos = Agent.GetPosition();
+
+	auto newPosIndex = PositionToIndex(currPos);
+	auto oldPosIndex = PositionToIndex(OldPos);
+
+	if (newPosIndex != oldPosIndex)
+	{
+		Cells[oldPosIndex].Agents.remove(&Agent);
+		Cells[newPosIndex].Agents.push_back(&Agent);
+	}
 }
 
 void CellSpace::RegisterNeighbors(ASteeringAgent& Agent, float QueryRadius)
