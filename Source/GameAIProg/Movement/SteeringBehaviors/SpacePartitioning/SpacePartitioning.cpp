@@ -1,4 +1,5 @@
 #include "SpacePartitioning.h"
+#include <algorithm>
 
 // --- Cell ---
 // ------------
@@ -75,8 +76,13 @@ void CellSpace::RenderCells() const
 
 int CellSpace::PositionToIndex(FVector2D const & Pos) const
 {
-	// TODO Calculate the index of the cell based on the position
-	return 0;
+	auto col = floor((Pos.X - CellOrigin.X) / CellWidth);
+	auto row = floor((Pos.Y - CellOrigin.Y) / CellHeight);
+
+	row = std::clamp(row, 0.0, (double) (NrOfRows - 1));
+	col = std::clamp(col, 0.0, (double) (NrOfCols - 1));
+
+	return (NrOfCols * row) + col;
 }
 
 bool CellSpace::DoRectsOverlap(FRect const & RectA, FRect const & RectB)
