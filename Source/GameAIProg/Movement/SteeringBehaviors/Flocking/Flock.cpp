@@ -1,7 +1,7 @@
 #include "Flock.h"
 #include "FlockingSteeringBehaviors.h"
 #include "Shared/ImGuiHelpers.h"
-
+#include "GameAIProg/Movement/SteeringBehaviors/SpacePartitioning/SpacePartitioning.h"
 
 Flock::Flock(
 	UWorld* pWorld,
@@ -14,7 +14,15 @@ Flock::Flock(
 	, FlockSize{ FlockSize }
 	, pAgentToEvade{pAgentToEvade}
 {
+	auto width = WorldSize * 2;
+	auto height = WorldSize * 2;
+
+	auto rows = 10;
+	auto cols = 10;
+
 	pAgents.SetNum(FlockSize);
+
+	pPartitionedSpace = std::make_unique<CellSpace>(pWorld, width, height, rows, cols, FlockSize);
 
 	//it will be reused for each agent
 	pNeighbors.Empty();
@@ -32,6 +40,11 @@ Flock::Flock(
 		if (agent)
 		{
 			pAgents[i] = agent; //store each agent in the array
+
+			if (pPartitionedSpace)
+			{
+				pPartitionedSpace->AddAgent(*agent);
+			}
 		}
 	}
 
@@ -69,7 +82,6 @@ Flock::Flock(
 
 	//priority
 	pPrioritySteering = std::make_unique<PrioritySteering>(std::vector<ISteeringBehavior*> {pEvadeBehavior.get(), pBlendedSteering.get()});
-
     // TODO: initialize the flock and the memory pool
 }
 
@@ -103,14 +115,6 @@ void Flock::Tick(float DeltaTime)
 
 		RegisterNeighbors(agent);
 		
-	    /*if(i == 0 && pSeekBehavior)
-		{
-			agent->SetSteeringBehavior(pSeekBehavior.get());
-		}*/
-		/*if (pBlendedSteering)
-		{
-			agent->SetSteeringBehavior(pBlendedSteering.get());
-		}*/
 		if (pPrioritySteering)
 		{
 			agent->SetSteeringBehavior(pPrioritySteering.get());
@@ -122,18 +126,10 @@ void Flock::Tick(float DeltaTime)
 		pAgentToEvade->SetSteeringBehavior(pWanderBehavior.get());
 		DrawDebugSphere(pWorld, pAgentToEvade->GetActorLocation(), 15.f, 8, FColor::Red, false, -1.f, 0, 2.f);
 	}
-
-
-  // TODO: update the flock
-  // TODO: for every agent:
-  // TODO: register the neighbors for this agent (-> fill the memory pool with the neighbors for the currently evaluated agent)
-  // TODO: update the agent (-> the steeringbehaviors use the neighbors in the memory pool)
-  // TODO: trim the agent to the world
 }
 
 void Flock::RenderDebug()
 {
- // TODO: Render all the agents in the flock
 	RenderNeighborhood();
 
 	if (DebugRenderSteering)
@@ -192,7 +188,6 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 		ImGui::Text("Flocking");
 		ImGui::Spacing();
 
-  // TODO: implement ImGUI checkboxes for debug rendering here
 		ImGui::Text("Debug Rendering");
 
 		ImGui::Checkbox("Render Steering", &DebugRenderSteering);
@@ -212,14 +207,24 @@ void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
 			ImGui::SliderFloat("Wander Value", &behaviors[4].Weight, 0.f, 5.f);
 		}
 
-		ImGui::Spacing();
+		ImGui::Checkbox("Use spatial partitioning", &usePartitioning);
 
-  // TODO: implement ImGUI sliders for steering behavior weights here
+		ImGui::Spacing();
 		//End
 		ImGui::End();
 	}
 #pragma endregion
 #endif
+}
+
+const TArray<ASteeringAgent*>& Flock::GetNeighbors() const
+{
+	return pNeighbors;
+}
+
+int Flock::GetNrOfNeighbors() const
+{
+	return m_NrOfNeighbors;
 }
 
 void Flock::RenderNeighborhood()
@@ -254,23 +259,28 @@ void Flock::RenderNeighborhood()
 #ifndef GAMEAI_USE_SPACE_PARTITIONING
 void Flock::RegisterNeighbors(ASteeringAgent* const pAgent)
 {
-	// TODO: Implement
-	// calculates the neigbors based on the "neighborhood radius"
-	// updates the pNeighbors container and their neighbor count
-	// do not include an agent in its own neighborhood
-
 	//clear previos neighbors and reset the neighbor count
 	pNeighbors.Empty();
 	m_NrOfNeighbors = 0;
 	
 	if (!pAgent)
 	{
-		m_NrOfNeighbors = 0;
+		return;
+	}
+
+	if (usePartitioning && pPartitionedSpace)
+	{
+		pPartitionedSpace->RegisterNeighbors(*pAgent, m_NeighborhoodRadius);
+
+		pNeighbors = pPartitionedSpace->GetNeighbors();
+		m_NrOfNeighbors = pNeighbors.Num();
+
 		return;
 	}
 
 	for (int i = 0; i < pAgents.Num(); i++)
 	{
+
 		if (pAgents[i] == nullptr ||pAgents[i] == pAgent) //skip myself
 		{
 			continue;
