@@ -43,7 +43,17 @@ CellSpace::CellSpace(UWorld* pWorld, float Width, float Height, int Rows, int Co
 	CellWidth = Width / Cols;
 	CellHeight = Height / Rows;
 
+	CellOrigin = { -Width / 2 , -Height / 2 };
 	// TODO create the cells
+	for (int i = 0; i < Rows; i++)
+	{
+		for (int t = 0; t < Cols; t++)
+		{
+			Cell cell = { (float)CellOrigin.X + CellWidth * t, (float)CellOrigin.Y + CellHeight * i, CellWidth, CellHeight};
+			Cells.push_back(cell);
+		}
+	}
+
 }
 
 void CellSpace::AddAgent(ASteeringAgent& Agent)
@@ -83,6 +93,14 @@ void CellSpace::EmptyCells()
 void CellSpace::RenderCells() const
 {
 	// TODO Render the cells with the number of agents inside of it
+	for (int i = 0; i < Cells.size(); i++)
+	{
+		FVector2D midPoint = { (Cells[i].BoundingBox.Min + Cells[i].BoundingBox.Max) / 2 };
+		FVector center = { midPoint.X , midPoint.Y , 0 };
+		FVector extent = { CellWidth / 2 , CellHeight / 2 , 0 };
+
+		DrawDebugBox(pWorld, center, extent, FColor::Red);
+	}
 }
 
 int CellSpace::PositionToIndex(FVector2D const & Pos) const

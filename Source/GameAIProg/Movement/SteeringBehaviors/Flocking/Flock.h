@@ -37,8 +37,8 @@ public:
 	int GetNrOfNeighbors() const; /*{ return pPartitionedSpace->GetNrOfNeighbors(); }*/
 /*#else*/ // No space partitioning
 	void RegisterNeighbors(ASteeringAgent* const Agent);
-	int GetNrOfNeighbors() const { return m_NrOfNeighbors; } //count how many neighbors have been stored for the current agent
-	const TArray<ASteeringAgent*>& GetNeighbors() const { return pNeighbors; }
+	//int GetNrOfNeighbors() const { return m_NrOfNeighbors; } //count how many neighbors have been stored for the current agent
+	//const TArray<ASteeringAgent*>& GetNeighbors() const { return pNeighbors; }
 /*#endif*/ // USE_SPACE_PARTITIONING
 
 	FVector2D GetAverageNeighborPos() const;

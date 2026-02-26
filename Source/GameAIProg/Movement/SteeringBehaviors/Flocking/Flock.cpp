@@ -148,6 +148,8 @@ void Flock::RenderDebug()
 			DrawDebugLine(pWorld, start, end, FColor::Green);
 		}
 	}
+
+	pPartitionedSpace->RenderCells();
 }
 
 void Flock::ImGuiRender(ImVec2 const& WindowPos, ImVec2 const& WindowSize)
