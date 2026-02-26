@@ -44,7 +44,7 @@ CellSpace::CellSpace(UWorld* pWorld, float Width, float Height, int Rows, int Co
 	CellHeight = Height / Rows;
 
 	CellOrigin = { -Width / 2 , -Height / 2 };
-	// TODO create the cells
+
 	for (int i = 0; i < Rows; i++)
 	{
 		for (int t = 0; t < Cols; t++)
@@ -92,14 +92,16 @@ void CellSpace::EmptyCells()
 
 void CellSpace::RenderCells() const
 {
-	// TODO Render the cells with the number of agents inside of it
 	for (int i = 0; i < Cells.size(); i++)
 	{
 		FVector2D midPoint = { (Cells[i].BoundingBox.Min + Cells[i].BoundingBox.Max) / 2 };
 		FVector center = { midPoint.X , midPoint.Y , 0 };
 		FVector extent = { CellWidth / 2 , CellHeight / 2 , 0 };
+		FVector textLocation = { center.X , center.Y , 0 };
+		auto agents = Cells[i].Agents.size();
 
 		DrawDebugBox(pWorld, center, extent, FColor::Red);
+		DrawDebugString(pWorld, textLocation, FString::FromInt(agents), 0, FColor::Red, 0.f);
 	}
 }
 

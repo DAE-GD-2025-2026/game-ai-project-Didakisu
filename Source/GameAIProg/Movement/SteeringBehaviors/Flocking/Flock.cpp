@@ -99,6 +99,8 @@ Flock::~Flock()
 
 void Flock::Tick(float DeltaTime)
 {
+	pPartitionedSpace->EmptyCells();
+
 	if (pEvadeBehavior && pAgentToEvade)
 	{
 		FSteeringParams evadeParams;
@@ -113,11 +115,18 @@ void Flock::Tick(float DeltaTime)
 		ASteeringAgent*agent = pAgents[i];
 		if (!agent) continue;
 
+		auto oldPos = agent->GetPosition();
 		RegisterNeighbors(agent);
 		
 		if (pPrioritySteering)
 		{
 			agent->SetSteeringBehavior(pPrioritySteering.get());
+		}
+
+		if (pPartitionedSpace)
+		{
+			pPartitionedSpace->AddAgent(*agent);
+			pPartitionedSpace->UpdateAgentCell(*agent, oldPos);
 		}
 	}
 
