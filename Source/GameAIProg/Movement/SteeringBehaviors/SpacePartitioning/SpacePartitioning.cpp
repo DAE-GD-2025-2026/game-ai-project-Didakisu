@@ -78,10 +78,47 @@ void CellSpace::UpdateAgentCell(ASteeringAgent& Agent, const FVector2D& OldPos)
 	}
 }
 
-void CellSpace::RegisterNeighbors(ASteeringAgent& Agent, float QueryRadius)
+void CellSpace::RegisterNeighbors(ASteeringAgent& Agent, float QueryRadius , bool debugDraw)
 {
-	// TODO Register the neighbors for the provided agent
-	// TODO Only check the cells that are within the radius of the neighborhood
+	NrOfNeighbors = 0;
+
+	FVector extent = { CellWidth/2 , CellHeight/2 , 0 };
+	FRect rect1
+	{ 
+		FVector2D{Agent.GetActorLocation().X - QueryRadius , Agent.GetActorLocation().Y - QueryRadius},
+		FVector2D{Agent.GetActorLocation().X + QueryRadius , Agent.GetActorLocation().Y + QueryRadius}
+	};
+
+	for (int i = 0; i < Cells.size(); i++)
+	{
+		FVector2D midPoint = { (Cells[i].BoundingBox.Min + Cells[i].BoundingBox.Max) / 2 };
+		FVector center = { midPoint.X , midPoint.Y , 0 };
+
+		FRect rect2{ Cells[i].BoundingBox.Min , Cells[i].BoundingBox.Max};
+		if (DoRectsOverlap(rect1, rect2))
+		{
+			if (debugDraw)
+			{
+				DrawDebugSolidBox(pWorld, center, extent, FColor{ 255,0,0,100 }, false, 0.f);
+			}
+
+			for (ASteeringAgent* pNeighbor : Cells[i].Agents)
+			{
+				if (pNeighbor == nullptr || pNeighbor == &Agent)
+				{
+					continue;
+				}
+
+				auto toTarget = pNeighbor->GetPosition() - Agent.GetPosition();
+				auto distance = toTarget.Length();
+				if (distance <= QueryRadius)
+				{
+					Neighbors[NrOfNeighbors] = pNeighbor;
+					NrOfNeighbors++;
+				}
+			}
+		}
+	}
 }
 
 void CellSpace::EmptyCells()

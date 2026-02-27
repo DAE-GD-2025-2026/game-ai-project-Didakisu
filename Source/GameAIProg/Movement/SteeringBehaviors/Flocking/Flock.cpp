@@ -257,6 +257,9 @@ void Flock::RenderNeighborhood()
 	RegisterNeighbors(firstAgent);
 	//draw neigborhood radius
 	DrawDebugCircle(pWorld, firstAgent->GetActorLocation(), m_NeighborhoodRadius, 32, FColor::Magenta ,false, -1.f, 0, 2.f, FVector(1, 0, 0), FVector(0, 1, 0), false);
+	//draw neighborhood box
+	FVector extent = { m_NeighborhoodRadius , m_NeighborhoodRadius , 0 };
+	DrawDebugBox(pWorld, firstAgent->GetActorLocation(), extent, FColor::Magenta);
 
 	for (int i = 0; i < pNeighbors.Num(); i++)
 	{
@@ -281,10 +284,16 @@ void Flock::RegisterNeighbors(ASteeringAgent* const pAgent)
 
 	if (usePartitioning && pPartitionedSpace)
 	{
-		pPartitionedSpace->RegisterNeighbors(*pAgent, m_NeighborhoodRadius);
+		UE_LOG(LogTemp, Warning, TEXT("Flock, RegisterNeighbors from partitioned space called."));
+		pPartitionedSpace->RegisterNeighbors(*pAgent, m_NeighborhoodRadius , pAgent == pAgents[0]);
 
 		pNeighbors = pPartitionedSpace->GetNeighbors();
-		m_NrOfNeighbors = pNeighbors.Num();
+		pNeighbors.SetNum(m_NrOfNeighbors);
+
+		for (int i = 0; i < m_NrOfNeighbors; i++)
+		{
+			pNeighbors[i] = pPartitionedSpace->GetNeighbors()[i];
+		}
 
 		return;
 	}

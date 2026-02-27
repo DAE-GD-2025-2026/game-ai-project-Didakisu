@@ -24,13 +24,13 @@ SteeringOutput BlendedSteering::CalculateSteering(float DeltaT, ASteeringAgent& 
 		BlendedSteering.AngularVelocity += steering.AngularVelocity * WeightedBehaviors[i].Weight;
 	}
 
-	if (Agent.GetDebugRenderingEnabled())
+	/*if (Agent.GetDebugRenderingEnabled())
 		DrawDebugDirectionalArrow(
 			Agent.GetWorld(),
 			Agent.GetActorLocation(),
 			Agent.GetActorLocation() + FVector{BlendedSteering.LinearVelocity, 0} * (Agent.GetMaxLinearSpeed() * DeltaT),
 			30.f, FColor::Red
-			);
+			);*/
 
 	return BlendedSteering;
 }
