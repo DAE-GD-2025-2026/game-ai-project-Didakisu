@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "BaseAgent.generated.h"
@@ -24,8 +25,8 @@ public:
 	ABaseAgent();
 
 protected:
-	bool bIsDebugRenderingEnabled{true};
-	
+	bool bIsDebugRenderingEnabled{ true };
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -35,15 +36,16 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-	
+
 	// BaseAgent Interface
-	FVector2D GetPosition() const { return FVector2D{GetActorLocation().X, GetActorLocation().Y}; }
+	FVector2D GetPosition() const { return FVector2D{ GetActorLocation().X, GetActorLocation().Y }; }
+	void SetPosition(FVector2D const& NewPosition) { SetActorLocation(FVector{ NewPosition, GetActorLocation().Z }); }
 	float GetRotation() const { return GetActorRotation().Yaw; }
-	
+
 	float GetMaxLinearSpeed() const { return GetCharacterMovement()->GetMaxSpeed(); }
 	void SetMaxLinearSpeed(float MaxSpeed) { GetCharacterMovement()->MaxWalkSpeed = MaxSpeed; }
 
-	FVector2D GetLinearVelocity() const { return FVector2D{GetCharacterMovement()->Velocity}; }
+	FVector2D GetLinearVelocity() const { return FVector2D{ GetCharacterMovement()->Velocity }; }
 
 	float GetMaxAngularSpeed() const { return GetCharacterMovement()->RotationRate.Yaw; }
 	void SetMaxAngularSpeed(float maxAngularSpeed) { GetCharacterMovement()->RotationRate.Yaw = maxAngularSpeed; }
@@ -58,4 +60,6 @@ public:
 
 	bool GetDebugRenderingEnabled() const { return bIsDebugRenderingEnabled; }
 	void SetDebugRenderingEnabled(bool IsEnabled) { this->bIsDebugRenderingEnabled = IsEnabled; }
+
+	float GetCapsuleRadius() const { return GetCapsuleComponent()->GetScaledCapsuleRadius(); }
 };

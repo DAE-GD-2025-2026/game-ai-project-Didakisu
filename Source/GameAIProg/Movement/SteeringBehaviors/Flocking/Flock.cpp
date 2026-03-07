@@ -35,10 +35,14 @@ Flock::Flock(
 		FVector spawnPos{ spawnPosX , spawnPosY , 0.f };
 	
 		//now spawn the agent actor
-		ASteeringAgent* agent = pWorld->SpawnActor<ASteeringAgent>(AgentClass, spawnPos, FRotator::ZeroRotator);
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		ASteeringAgent* agent = pWorld->SpawnActor<ASteeringAgent>(AgentClass, spawnPos, FRotator::ZeroRotator, SpawnParams);
 
 		if (agent)
 		{
+			agent->SetActorTickEnabled(false);
 			pAgents[i] = agent; //store each agent in the array
 
 			if (pPartitionedSpace)
@@ -53,10 +57,14 @@ Flock::Flock(
 		
 		FVector spawnPos{ 0.f , 90.f , 0.f }; 
 
-		ASteeringAgent * agent = pWorld->SpawnActor<ASteeringAgent>(AgentClass, spawnPos, FRotator::ZeroRotator);
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		ASteeringAgent * agent = pWorld->SpawnActor<ASteeringAgent>(AgentClass, spawnPos, FRotator::ZeroRotator,SpawnParams);
 
 		if (agent)
 		{
+			agent->SetActorTickEnabled(false);
 			this->pAgentToEvade = agent;
 			DrawDebugSphere(pWorld, this->pAgentToEvade->GetActorLocation(), 15.f, 8, FColor::Red, false, -1.f, true);
 		}
@@ -123,9 +131,11 @@ void Flock::Tick(float DeltaTime)
 			agent->SetSteeringBehavior(pPrioritySteering.get());
 		}
 
+		agent->Tick(DeltaTime);
+
 		if (pPartitionedSpace)
 		{
-			pPartitionedSpace->AddAgent(*agent);
+			//pPartitionedSpace->AddAgent(*agent);
 			pPartitionedSpace->UpdateAgentCell(*agent, oldPos);
 		}
 	}
@@ -133,6 +143,7 @@ void Flock::Tick(float DeltaTime)
 	if (pAgentToEvade)
 	{
 		pAgentToEvade->SetSteeringBehavior(pWanderBehavior.get());
+		pAgentToEvade->Tick(DeltaTime);
 		DrawDebugSphere(pWorld, pAgentToEvade->GetActorLocation(), 15.f, 8, FColor::Red, false, -1.f, 0, 2.f);
 	}
 }
@@ -340,7 +351,7 @@ FVector2D Flock::GetAverageNeighborVelocity() const
 
 	if (m_NrOfNeighbors == 0)
 	{
-		return FVector2D::ZeroVector;;
+		return FVector2D::ZeroVector;
 	}
 
 	for (int i = 0; i < pNeighbors.Num(); i++)
