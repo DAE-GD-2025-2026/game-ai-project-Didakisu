@@ -109,10 +109,22 @@ namespace GameAI
 	inline void EulerianPath::VisitAllNodesDFS(const std::vector<Node*>& Nodes, std::vector<bool>& visited, int startIndex ) const
 	{
 		// TODO Mark the visited node
-
+		visited[startIndex] = true;
 		// TODO Ask the graph for the connections from that node
+		auto connections = m_pGraph->FindConnectionsFrom(Nodes[startIndex]->GetId());
 		// TODO recursively visit any valid connected nodes that were not visited before
 		// TODO Tip: use an index-based for-loop to find the correct index
+		for (int i = 0; i < connections.size(); i++)
+		{
+			int neighbor = connections[i]->GetToId();
+			for (int a = 0; a < Nodes.size(); a++)
+			{
+				if (Nodes[a]->GetId() == neighbor && !visited[a])
+				{
+					VisitAllNodesDFS(Nodes, visited, a);
+				}
+			}
+		}
 	}
 
 	inline bool EulerianPath::IsConnected() const
