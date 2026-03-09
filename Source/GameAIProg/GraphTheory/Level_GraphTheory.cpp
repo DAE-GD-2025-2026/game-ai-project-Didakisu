@@ -19,6 +19,7 @@ ALevel_GraphTheory::ALevel_GraphTheory()
 void ALevel_GraphTheory::BeginPlay()
 {
 	Super::BeginPlay();
+	Renderer = GraphRenderer(GetWorld());
 	
 	// Add the graph editor to our player
 	if (PlayerController = Cast<APlayerController>(GetWorld()->GetFirstLocalPlayerFromController()->PlayerController); 
@@ -42,6 +43,10 @@ void ALevel_GraphTheory::BeginPlay()
 	}
 	
 	// TODO Make the graph and a couple connected nodes here...
+
+	/*auto indx1 = Graph.AddNode(NodeFactory.CreateNode(FVector2D(0.f, 0.f)));
+	auto indx2 = Graph.AddNode(NodeFactory.CreateNode(FVector2D(100.f, 100.f)));
+	Graph.AddConnection(std::make_unique<GameAI::Connection>(indx1, indx2));*/
 	
 	// Spawn the Agent
 	Agent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, 
@@ -110,13 +115,14 @@ void ALevel_GraphTheory::UpdateAgentPath(std::vector<Node*> const& Trail)
 	
 	// TODO convert Node vector to positions vector
 
+	for (int i = 0; i < Trail.size(); i++)
+	{
+		path.push_back(Trail[i]->GetPosition());
+	}
+
 	PathFollow.SetPath(path);
 	if (path.size() > 0)
 	{
 		Agent->SetPosition(path[0]);
 	}
 }
-
-
-
-
