@@ -11,6 +11,102 @@ AStar::AStar(Graph* const pGraph, HeuristicFunctions::Heuristic hFunction)
 std::vector<Node*>AStar::FindPath(Node* const pStartNode, Node* const pGoalNode)
 {
 	std::vector<Node*> path{};
+	std::vector<NodeRecord> openList{};
+	std::vector<NodeRecord> closedList{};
+	NodeRecord currentNodeRecord{};
+
+	NodeRecord startRecord{};
+
+	startRecord.pNode = pStartNode;
+	startRecord.pConnection = nullptr;
+	startRecord.estimatedTotalCost = GetHeuristicCost(pStartNode, pGoalNode);
+
+	openList.push_back(startRecord);
+
+	while (!openList.empty())
+	{
+		currentNodeRecord = *std::min_element(openList.begin(), openList.end());
+
+		if (currentNodeRecord.pNode == pGoalNode)
+		{
+			break;
+		}
+		else
+		{
+			auto connections = pGraph->FindConnectionsFrom(currentNodeRecord.pNode->GetId());
+
+			for (int i = 0; i < connections.size(); i++)
+			{
+				auto nodeId = connections[i]->GetToId();
+				Node* pNextNode = pGraph->GetNode(nodeId).get();
+
+				auto totalGCost = currentNodeRecord.costSoFar + connections[i]->GetWeight();
+
+				for (int a = 0; a < closedList.size(); a++)
+				{
+					if (closedList[a].pNode == pNextNode)
+					{
+						if (totalGCost >= closedList[a].costSoFar)
+						{
+							continue;
+						}
+						else
+						{
+							closedList.erase(closedList.begin() + a);
+						}
+					}
+				}
+
+				for (int a = 0; a < openList.size(); a++)
+				{
+					if (openList[a].pNode == pNextNode)
+					{
+						if (totalGCost >= openList[a].costSoFar)
+						{
+							continue;
+						}
+						else
+						{
+							openList.erase(openList.begin() + a);
+						}
+					}
+				}
+
+				NodeRecord newNodeRecord{};
+
+				newNodeRecord.pConnection = connections[i];
+				newNodeRecord.pNode = pNextNode;
+				newNodeRecord.costSoFar = totalGCost;
+				newNodeRecord.estimatedTotalCost = totalGCost + GetHeuristicCost(pNextNode, pGoalNode);
+
+				openList.push_back(newNodeRecord);
+			}
+
+			auto it = std::find(openList.begin(), openList.end(), currentNodeRecord);
+			openList.erase(it);
+			closedList.push_back(currentNodeRecord);
+		}
+	}
+
+	//backtracking
+
+	while (currentNodeRecord.pNode != pStartNode)//currentNodeRecord contains start node at the beginning of backtracking
+	{
+		path.push_back(currentNodeRecord.pNode);
+		auto previousNode = currentNodeRecord.pConnection->GetFromId();
+
+		for (int i = 0; i < closedList.size(); i++)
+		{
+			if (closedList[i].pNode->GetId() == previousNode)
+			{
+				currentNodeRecord = closedList[i];
+			}
+		}
+	}
+
+	path.push_back(pStartNode);
+	std::reverse(path.begin(), path.end());
+
 	return path;
 }
 
