@@ -42,19 +42,27 @@ std::vector<Node*>AStar::FindPath(Node* const pStartNode, Node* const pGoalNode)
 
 				auto totalGCost = currentNodeRecord.costSoFar + connections[i]->GetWeight();
 
+				bool skipConnection = false; //added this flag to continue correctly
+
 				for (int a = 0; a < closedList.size(); a++)
 				{
 					if (closedList[a].pNode == pNextNode)
 					{
 						if (totalGCost >= closedList[a].costSoFar)
 						{
-							continue;
+							skipConnection = true; 
 						}
 						else
 						{
 							closedList.erase(closedList.begin() + a);
 						}
+						break;
 					}
+				}
+
+				if (skipConnection)
+				{
+					continue;
 				}
 
 				for (int a = 0; a < openList.size(); a++)
@@ -63,13 +71,19 @@ std::vector<Node*>AStar::FindPath(Node* const pStartNode, Node* const pGoalNode)
 					{
 						if (totalGCost >= openList[a].costSoFar)
 						{
-							continue;
+							skipConnection = true;
 						}
 						else
 						{
 							openList.erase(openList.begin() + a);
 						}
+						break;
 					}
+				}
+
+				if (skipConnection)
+				{
+					continue;
 				}
 
 				NodeRecord newNodeRecord{};
