@@ -42,7 +42,7 @@ void ALevel_PathfindingAStar::BeginPlay()
 	
 	// Create graph & renderer
 	Renderer = new GraphRenderer{GetWorld()};
-	GraphRenderOptions RenderOptions{};
+	//GraphRenderOptions RenderOptions{};
 	RenderOptions.bDrawConnectionWeights = false;
 	RenderOptions.bDrawConnections = false;
 	RenderOptions.bDrawNodeIds = false;
@@ -88,13 +88,21 @@ void ALevel_PathfindingAStar::BindLevelInputActions()
 void ALevel_PathfindingAStar::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	UpdateImGui();
-	
+
 	Renderer->RenderGraph(*TerrainGraph);
-	TerrainGraph->DebugDrawCells(GetWorld());
-	TerrainGraph->DrawTerrain(GetWorld());
-	// TODO implement conditional debug draws
+	if (bDrawGrid)
+	{
+		TerrainGraph->DebugDrawCells(GetWorld());
+		TerrainGraph->DrawTerrain(GetWorld());
+	}
+
+	RenderOptions.bDrawConnections = bDrawConnections;
+	RenderOptions.bDrawConnectionWeights = bDrawConnectionsCosts;
+	RenderOptions.bDrawNodeIds = bDrawNodeNumbers;
+
+	Renderer->SetRenderOptions(RenderOptions);
 }
 
 void ALevel_PathfindingAStar::CalculatePath()
@@ -107,8 +115,8 @@ void ALevel_PathfindingAStar::CalculatePath()
 	{
 		//Select (uncomment) BFS Pathfinding or A* Pathfinding
 		
-		BFS pathfinder = BFS(TerrainGraph);
-		//AStar pathfinder = AStar(TerrainGraph, HeuristicFunction);
+		//BFS pathfinder = BFS(TerrainGraph);
+		AStar pathfinder = AStar(TerrainGraph, HeuristicFunction);
 		TerrainNode* const startNode = TerrainGraph->GetNodeAs<TerrainNode>(PathStartNodeId);
 		TerrainNode* const endNode = TerrainGraph->GetNodeAs<TerrainNode>(PathEndNodeId);
 
@@ -188,10 +196,12 @@ void ALevel_PathfindingAStar::UpdateImGui()
 		ImGui::Spacing();
 		
 		// TODO conditional debug draws
-		// ImGui::Checkbox("Grid", &bDrawGrid);
-		// ImGui::Checkbox("NodeNumbers", &bDrawNodeNumbers);
-		// ImGui::Checkbox("Connections", &bDrawConnections);
-		// ImGui::Checkbox("Connections Costs", &bDrawConnectionsCosts);
+		
+		 ImGui::Checkbox("Grid", &bDrawGrid);
+		 ImGui::Checkbox("NodeNumbers", &bDrawNodeNumbers);
+		 ImGui::Checkbox("Connections", &bDrawConnections);
+		 ImGui::Checkbox("Connections Costs", &bDrawConnectionsCosts);
+
 		if (ImGui::Combo("", &SelectedHeuristic, "Manhattan\0Euclidean\0SqEuclidean\0Octile\0Chebyshev", 4))
 		{
 			switch (SelectedHeuristic)

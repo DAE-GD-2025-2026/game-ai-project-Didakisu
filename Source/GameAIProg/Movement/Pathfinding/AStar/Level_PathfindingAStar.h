@@ -52,10 +52,12 @@ private:
 	GameAI::TerrainGridGraph* TerrainGraph{nullptr};
 	GameAI::GraphRenderer* Renderer{nullptr};
 	GameAI::TerrainNodeFactory* NodeFactory{nullptr};
+	GameAI::GraphRenderOptions RenderOptions{};
 	
 	int PathStartNodeId{44};
 	int PathEndNodeId{88};
 	int SelectedHeuristic = 4;
+
 	GameAI::HeuristicFunctions::Heuristic HeuristicFunction = GameAI::HeuristicFunctions::Chebyshev;
 	std::vector<GameAI::Node*> FoundPath{};
 
@@ -68,4 +70,9 @@ private:
 	void SetStartNodeId();
 	void SetEndNodeId();
 	void SetNodeTerrain(GameAI::TerrainNode::Type TerrainType);
+
+	bool bDrawGrid{ false };
+	bool bDrawNodeNumbers{ false };
+	bool bDrawConnections{ false };
+	bool bDrawConnectionsCosts{ false };
 };
