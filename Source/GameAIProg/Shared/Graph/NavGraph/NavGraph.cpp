@@ -48,12 +48,68 @@ int GameAI::NavGraph::GetNodeIdFromEdgeIndex(int EdgeIdx) const
 
 void GameAI::NavGraph::CreateNavigationGraph()
 {
-	//1. Go over all the edges of the navigation mesh and create nodes
-			// Create node here
+	const auto& edges = pNavPoly->GetEdges();
+	const auto& triangles = pNavPoly->GetTriangles();
 
-	//2. Create connections now that every node is created	
-		//2 valid nodes -> 1 connection
-		//3 valid nodes -> 3 connections
-		
+	for (int i = 0; i < edges.size(); i++)
+	{
+		//check if an edge is shared between 2 triangles
+		int sharedCount = 0;
+		for (int a = 0; a < triangles.size(); a++)
+		{
+			if (triangles[a].HasEdge(edges[i]))
+			{
+				sharedCount++;
+			}
+		}
+
+		if (sharedCount < 2)
+		{
+			continue;
+		}
+
+		//create node
+
+		auto p1 = edges[i].GetP1(*pNavPoly);
+		auto p2 = edges[i].GetP2(*pNavPoly);
+
+		auto midpoint = (FVector2D{ (p1.X + p2.X) / 2 , (p1.Y + p2.Y) / 2 });
+
+		AddNode(std::make_unique<NavGraphNode>(midpoint, i));
+	}
+
+	for (int a = 0; a < triangles.size(); a++)
+	{
+		const auto& triangleEdges = triangles[a].GetEdges();
+		std::vector<int> validNodeIds; 
+
+		for (int e = 0; e < triangleEdges.size(); e++)
+		{
+			auto indx = pNavPoly->FindEdgeIndex(triangleEdges[e]);
+			if (indx.has_value())
+			{
+				int nodeId = GetNodeIdFromEdgeIndex(indx.value());
+				if (nodeId != Graphs::InvalidNodeId)
+				{
+					validNodeIds.push_back(nodeId);
+				}
+			}
+		}
+
+		if (validNodeIds.size() == 2)
+		{
+			AddConnection(validNodeIds[0], validNodeIds[1]);
+		}
+
+		if (validNodeIds.size() == 3)
+		{
+			AddConnection(validNodeIds[0], validNodeIds[1]);
+			AddConnection(validNodeIds[0], validNodeIds[2]);
+			AddConnection(validNodeIds[1], validNodeIds[2]);
+		}
+
+	}
+	
+	SetConnectionCostsToDistances();
 	//3. Set the connections cost to the actual distance
 }
