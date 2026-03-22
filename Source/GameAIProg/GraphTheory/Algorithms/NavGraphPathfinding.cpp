@@ -15,14 +15,75 @@ std::vector<FVector2D> NavMeshPathfinding::FindPath(const FVector2D& startPos, c
 	std::vector<FVector2D> finalPath{};
 
 	//Get the start and endTriangle
+	auto* pNavPoly = pNavGraph->GetNavPolygon();
+	auto* startTriangle = pNavPoly->GetTriangleAtPosition(startPos, true);
+	auto* endTriangle = pNavPoly->GetTriangleAtPosition(endPos, true);
 
-	//We have valid start/end triangles and they are not the same
-	//=> Start looking for a path
-	//Copy the graph
+	if(!startTriangle || !endTriangle)
+	{
+		return finalPath;
+	}
 
-	//Create Extra node for the Start Node (Agent's position
+	if (startTriangle == endTriangle)
+	{
+		finalPath.push_back(startPos);
+		finalPath.push_back(endPos);
+		return finalPath;
+	}
 
-	//Create extra node for the endNode
+	
+	//startNode
+	auto pGraphClone = pNavGraph->Clone();
+	std::unique_ptr<NavGraphNode> startNode = std::make_unique<NavGraphNode>(startPos, -1);
+	int startNodeId = pGraphClone->AddNode(std::move(startNode));//start node cannot be owned by more than 1 owner
+
+	const auto& startTriangleEdges = startTriangle->GetEdges();
+	for (int i = 0; i < startTriangleEdges.size(); i++)
+	{
+		auto edgeId = pNavGraph->GetNavPolygon()->FindEdgeIndex(startTriangleEdges[i]);
+		if (edgeId.has_value())
+		{
+			int connectionNodeId = pGraphClone->GetNodeIdFromEdgeIndex(edgeId.value());
+			if (connectionNodeId != Graphs::InvalidNodeId)
+			{
+				pGraphClone->AddConnection(startNodeId, connectionNodeId);
+				auto* pConnection = pGraphClone->FindConnection(startNodeId, connectionNodeId);//find conn
+				auto* pConnectedNode = pGraphClone->GetNodeAs<NavGraphNode>(connectionNodeId);//get the node from the conn as a navgraphnoce
+				pConnection->SetWeight(FVector2D::Distance(startPos, pConnectedNode->GetPosition()));
+			}
+		}
+	}
+
+
+	//endNode
+	std::unique_ptr<NavGraphNode> endNode = std::make_unique<NavGraphNode>(endPos, -1);
+	int endNodeId = pGraphClone->AddNode(std::move(endNode));
+
+	const auto& endTriangleEdges = endTriangle->GetEdges();
+	for (int i = 0; i < endTriangleEdges.size(); i++)
+	{
+		auto edgeId = pNavGraph->GetNavPolygon()->FindEdgeIndex(endTriangleEdges[i]);
+		if (edgeId.has_value())
+		{
+			int connectionNodeId = pGraphClone->GetNodeIdFromEdgeIndex(edgeId.value());
+			if (connectionNodeId != Graphs::InvalidNodeId)
+			{
+				pGraphClone->AddConnection(endNodeId, connectionNodeId);
+				auto* pConnection = pGraphClone->FindConnection(endNodeId, connectionNodeId);//find conn
+				auto* pConnectedNode = pGraphClone->GetNodeAs<NavGraphNode>(connectionNodeId);//get the node from the conn as a navgraphnoce
+				pConnection->SetWeight(FVector2D::Distance(endPos, pConnectedNode->GetPosition()));
+			}
+		}
+	}
+
+	AStar aStar(pGraphClone.get(), HeuristicFunctions::Euclidean);
+	auto path = aStar.FindPath(pGraphClone->GetNodeAs<NavGraphNode>(startNodeId), pGraphClone->GetNodeAs<NavGraphNode>(endNodeId));
+
+	for (int p = 0; p < path.size(); p++)
+	{
+		finalPath.push_back(path[p]->GetPosition());
+		debugNodePositions.push_back(path[p]->GetPosition());
+	}
 
 	//Run A star on new graph
 
