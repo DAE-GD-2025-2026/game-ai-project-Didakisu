@@ -102,6 +102,11 @@ std::vector<Node*>AStar::FindPath(Node* const pStartNode, Node* const pGoalNode)
 		}
 	}
 
+	if (currentNodeRecord.pNode != pGoalNode)
+	{
+		return path;
+	}
+
 	//backtracking
 
 	while (currentNodeRecord.pNode != pStartNode)//currentNodeRecord contains start node at the beginning of backtracking
