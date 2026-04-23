@@ -1,0 +1,52 @@
+#pragma once
+#include <functional>
+#include <vector>
+#include <memory>
+
+namespace GameAI::FSM
+{
+	class State
+	{
+	public:
+		virtual ~State() = default;
+
+		virtual void OnEnter();
+		virtual void OnExit();
+		virtual void Update(float deltaTime) = 0;
+	};
+
+	class Transition
+	{
+	public:
+		State* To{ nullptr }; //to what we will transition
+		std::function<bool() > Condition; //AddTransition() requires a std::function
+	};
+
+	class FSM
+	{
+	public:
+		void AddState(std::unique_ptr<State> state)
+		{
+			States.push_back(std::move(state));
+		}
+
+		void AddTransition(Transition transition)
+		{
+			Transitions.push_back(transition);
+		}
+
+		void SetInitialState(State* state)
+		{
+			CurrentState = state;
+		}
+
+		void Update(float deltaTime)
+		{
+
+		}
+	private:
+		std::vector<std::unique_ptr<State>> States{};
+		std::vector<Transition> Transitions{};
+		State* CurrentState{ nullptr };
+	};
+}
