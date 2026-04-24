@@ -7,14 +7,15 @@
 
 #include "CoreMinimal.h"
 #include "BrainComponent.h"
+#include "FSM.h"
 #include "FSMComponent.generated.h"
 
-namespace GameAI::FSM
-{
-	class State;
-	class Transition;
-	class FSM; // contains FSM logic
-}
+//namespace GameAI::FSM
+//{
+//	class State;
+//	class Transition;
+//	class FSM; // contains FSM logic
+//}
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class GAMEAIPROG_API UFSMComponent : public UBrainComponent
@@ -42,6 +43,6 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-	//std::unique_ptr<GameAI::FSM::FSM> FSMInstance;
+	std::unique_ptr<GameAI::FSM::FSM> FSMInstance;
 	bool bIsRunning{false};
 };

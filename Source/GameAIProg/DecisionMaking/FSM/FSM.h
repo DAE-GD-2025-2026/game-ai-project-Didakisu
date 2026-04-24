@@ -10,14 +10,15 @@ namespace GameAI::FSM
 	public:
 		virtual ~State() = default;
 
-		virtual void OnEnter();
-		virtual void OnExit();
+		virtual void OnEnter() {};
+		virtual void OnExit() {};
 		virtual void Update(float deltaTime) = 0;
 	};
 
 	class Transition
 	{
 	public:
+		State* From{ nullptr };
 		State* To{ nullptr }; //to what we will transition
 		std::function<bool() > Condition; //AddTransition() requires a std::function
 	};
@@ -30,9 +31,9 @@ namespace GameAI::FSM
 			States.push_back(std::move(state));
 		}
 
-		void AddTransition(Transition transition)
+		void AddTransition(State* From, State* To, std::function<bool()> EvalFunc)
 		{
-			Transitions.push_back(transition);
+			Transitions.push_back({ From,To, EvalFunc });
 		}
 
 		void SetInitialState(State* state)
@@ -40,9 +41,28 @@ namespace GameAI::FSM
 			CurrentState = state;
 		}
 
+		State* GetInitialState()
+		{
+			return States[0].get();
+		}
+
 		void Update(float deltaTime)
 		{
+			CurrentState->Update(deltaTime);
 
+			for (int i = 0; i < Transitions.size(); i++)
+			{
+				if (Transitions[i].From == CurrentState)
+				{
+					if (Transitions[i].Condition())
+					{
+						CurrentState->OnExit();
+						CurrentState = Transitions[i].To;
+						CurrentState->OnEnter();
+						break;
+					}
+				}
+			}
 		}
 	private:
 		std::vector<std::unique_ptr<State>> States{};
