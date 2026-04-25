@@ -3,6 +3,8 @@
 #include <vector>
 #include <memory>
 
+#include "BehaviorTree/BlackboardComponent.h"
+
 namespace GameAI::FSM
 {
 	class State
@@ -13,6 +15,8 @@ namespace GameAI::FSM
 		virtual void OnEnter() {};
 		virtual void OnExit() {};
 		virtual void Update(float deltaTime) = 0;
+
+		UBlackboardComponent* Blackboard{ nullptr };
 	};
 
 	class Transition
@@ -39,6 +43,11 @@ namespace GameAI::FSM
 		void SetInitialState(State* state)
 		{
 			CurrentState = state;
+		}
+
+		const std::vector<std::unique_ptr<State>>& GetStates()
+		{
+			return States;
 		}
 
 		State* GetInitialState()

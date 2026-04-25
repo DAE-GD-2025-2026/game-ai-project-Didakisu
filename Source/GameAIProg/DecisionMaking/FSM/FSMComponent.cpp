@@ -2,6 +2,7 @@
 
 
 #include "FSMComponent.h"
+#include "AIController.h"
 
 
 // Sets default values for this component's properties
@@ -50,6 +51,13 @@ void UFSMComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 void UFSMComponent::StartLogic()
 {
 	Super::StartLogic();
+
+	UBlackboardComponent* Blackboard = Cast<AAIController>(GetOwner())->GetBlackboardComponent();
+
+	for (auto& state : FSMInstance->GetStates())
+	{
+		state->Blackboard = Blackboard;
+	}
 
 	// TODO
 	bIsRunning = true;
