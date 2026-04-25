@@ -25,4 +25,6 @@ protected:
 private:
 	UPROPERTY()
 	ASteeringAgent* Agent{nullptr}; // ref
+	UPROPERTY()
+	ASteeringAgent* Thief{ nullptr }; 
 };

@@ -7,6 +7,7 @@
 #include "DecisionMaking/GameAIController.h"
 #include "States/PatrolState.h"
 
+#include "InputCoreTypes.h"
 
 // Sets default values
 ALevel_FSM::ALevel_FSM()
@@ -20,6 +21,7 @@ void ALevel_FSM::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	//spawn guard
 	Agent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, 
 	FVector{0,0,90}, FRotator::ZeroRotator);
 	Agent->SetDebugRenderingEnabled(false);
@@ -48,11 +50,39 @@ void ALevel_FSM::BeginPlay()
 			AIController->RunFiniteStateMachine();
 		}
 	}
+
+
+	//spawn thief
+	Thief = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass,
+	FVector{ -500, -500, 90 }, FRotator::ZeroRotator);
+
+	if (Thief)
+	{
+		Thief->SetDebugRenderingEnabled(false);
+	}
 }
 
 // Called every frame
 void ALevel_FSM::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!Thief) return;
+
+	if (APlayerController* playerController = GetWorld()->GetFirstPlayerController())
+	{
+		if (playerController->WasInputKeyJustPressed(EKeys::LeftMouseButton))
+		{
+			FHitResult Hit;
+			playerController->GetHitResultUnderCursor(ECC_Visibility, false, Hit);
+			if (Hit.bBlockingHit && Thief)
+			{
+				if (AAIController* ThiefAI = Cast<AAIController>(Thief->GetController()))
+				{
+					ThiefAI->MoveToLocation(Hit.Location);
+				}
+			}
+		}
+	}
 }
 
