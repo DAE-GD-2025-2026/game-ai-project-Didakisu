@@ -29,7 +29,22 @@ void ALevel_FSM::BeginPlay()
 	{
 		if (UFSMComponent* FSM = Cast<UFSMComponent>(AIController->GetBrainComponent()))
 		{
-			FSM->AddState(std::make_unique<GameAI::FSM::PatrolState>());
+
+			TArray<FVector> PatrolPath =
+			{
+				FVector(100, 0, 90),
+				FVector(400, 200, 90),
+				FVector(300, 600, 90),
+				FVector(-200, 400, 90)
+			};
+
+			//debug
+			for (const FVector& Point : PatrolPath)
+			{
+				DrawDebugSphere(GetWorld(), Point, 50.f, 12, FColor::Magenta, true, -1.f, 0, 5.f);
+			}
+
+			FSM->AddState(std::make_unique<GameAI::FSM::PatrolState>(Agent, PatrolPath));
 			AIController->RunFiniteStateMachine();
 		}
 	}

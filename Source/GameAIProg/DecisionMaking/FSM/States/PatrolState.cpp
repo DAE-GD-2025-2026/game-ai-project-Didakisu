@@ -12,7 +12,7 @@ namespace GameAI::FSM
 
 	void PatrolState::OnEnter()
 	{
-
+		CurrentWaypointIndex = 0;
 	}
 
 	void PatrolState::OnExit()
