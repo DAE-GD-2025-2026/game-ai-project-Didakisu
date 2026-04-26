@@ -27,4 +27,6 @@ private:
 	ASteeringAgent* Agent{nullptr}; // ref
 	UPROPERTY()
 	ASteeringAgent* Thief{ nullptr }; 
+
+	bool IsTargetVisible() const;
 };
