@@ -4,9 +4,9 @@
 #include "DecisionMaking/GameAIController.h"
 
 GameAI::FSM::SearchState::SearchState(ASteeringAgent* Agent):
-	Agent(Agent), WanderBehavior(std::make_unique<Wander>())
+	Agent(Agent)
 {
-	//WanderBehavior = std::make_unique<Wander>();
+
 }
 
 void GameAI::FSM::SearchState::OnEnter()
@@ -27,25 +27,32 @@ void GameAI::FSM::SearchState::OnExit()
 
 void GameAI::FSM::SearchState::Update(float deltaTime)
 {
-	SearchTimer += deltaTime;
-	//first go to the thief's last known position
-	if (!bHasReachedLastTargetPosition)
-	{
-		if (AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController()))
-		{
-			AIController->MoveToLocation(LastKnownPosition);
+    SearchTimer += deltaTime;
 
-			//check if player arrived at the last known pos
-			float distance = FVector::Distance(Agent->GetActorLocation(), FVector(LastKnownPosition.X, LastKnownPosition.Y, 90.f));
+    if (AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController()))
+    {
+        if (!bHasReachedLastTargetPosition)
+        {
+            AIController->MoveToLocation(LastKnownPosition);
 
+            float distance = FVector::Distance(Agent->GetActorLocation(), LastKnownPosition);
+            if (distance < threshold)
+            {
+                bHasReachedLastTargetPosition = true;
+                WanderTimer = 0.f;
+            }
+        }
+        else
+        {
+            WanderTimer += deltaTime;
 
-			if (distance < threshold)
-			{
-				bHasReachedLastTargetPosition = true;
-				//then wander
-				Agent->SetSteeringBehavior(WanderBehavior.get());
-			}
-		}
-	}
-
+            if (WanderTimer > 2.f)
+            {
+                FVector RandomOffset = FVector(FMath::RandRange(-400.f, 400.f), FMath::RandRange(-400.f, 400.f), 0.f);
+                FVector WanderTarget = LastKnownPosition + RandomOffset;
+                AIController->MoveToLocation(WanderTarget);
+                WanderTimer = 0.f;
+            }
+        }
+    }
 }

@@ -29,6 +29,11 @@ void ALevel_FSM::BeginPlay()
 	FVector{0,0,90}, FRotator::ZeroRotator);
 	Agent->SetDebugRenderingEnabled(false);
 
+	if (Agent)
+	{
+		Agent->GetCharacterMovement()->MaxWalkSpeed = 300.f;
+	}
+
 	//spawn thief
 	Thief = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass,
 		FVector{ -500, -500, 90 }, FRotator::ZeroRotator);
@@ -36,6 +41,7 @@ void ALevel_FSM::BeginPlay()
 	if (Thief)
 	{
 		Thief->SetDebugRenderingEnabled(false);
+		Thief->GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	}
 	
 	//TODO
@@ -70,6 +76,19 @@ void ALevel_FSM::BeginPlay()
 				return IsTargetVisible();
 				});
 
+			FSM->AddTransition(chaseState, searchState, [this]() -> bool {
+				return !IsTargetVisible();
+				});
+
+			FSM->AddTransition(searchState, chaseState, [this]() -> bool {
+				return IsTargetVisible();
+				});
+
+			FSM->AddTransition(searchState, patrolState, [searchState]()-> bool {
+				return searchState->SearchTimer > searchState->MaxSearchingTime;
+				});
+
+
 			AIController->RunFiniteStateMachine();
 		}
 	}
@@ -94,6 +113,10 @@ bool ALevel_FSM::IsTargetVisible() const
 
 	float detectionRadius = 500.f;
 	float distance = FVector::Distance(Agent->GetActorLocation(), Thief->GetActorLocation());
+	
+	FVector YAxis = FVector(1, 0, 0);
+	FVector ZAxis = FVector(0, 1, 0);
+	DrawDebugCircle(GetWorld(), Agent->GetActorLocation(), detectionRadius, 32, FColor::Yellow, false, -1.f, 0, 2.f, YAxis, ZAxis);
 
 	if (distance > detectionRadius)
 	{
@@ -105,9 +128,17 @@ bool ALevel_FSM::IsTargetVisible() const
 	FVector end = Thief->GetActorLocation();
 	GetWorld()->LineTraceSingleByChannel(hitResult, start, end, ECC_Visibility);
 
+	/*FColor RayColor = (hitResult.bBlockingHit && hitResult.GetActor() != Thief) ? FColor::Red : FColor::Green;
+	DrawDebugLine(GetWorld(), start, end, RayColor, false, -1.f, 0, 2.f);*/
+
 	if (hitResult.bBlockingHit && hitResult.GetActor() != Thief)
 	{
+		DrawDebugLine(GetWorld(), start, end, FColor::Red);
 		return false;
+	}
+	else
+	{
+		DrawDebugLine(GetWorld(), start, end, FColor::Green);
 	}
 
 	return true;

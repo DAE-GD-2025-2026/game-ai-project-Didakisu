@@ -10,7 +10,7 @@ GameAI::FSM::ChaseState::ChaseState(ASteeringAgent* Agent, ASteeringAgent* Targe
 
 void GameAI::FSM::ChaseState::OnEnter()
 {
-
+	Agent->SetSteeringBehavior(nullptr);
 }
 
 void GameAI::FSM::ChaseState::OnExit()

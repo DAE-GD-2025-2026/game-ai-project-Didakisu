@@ -53,6 +53,8 @@ public:
 	Arrive() = default;
 	virtual ~Arrive() = default;
 
+	/*void SetTargetPosition(FVector2D position) { Target.Position = position; }*/
+
 	//steering
 	virtual SteeringOutput CalculateSteering(float DeltaT, ASteeringAgent& Agent) override;
 	void SetTargetRadius(float radius) { m_TargetRadius = radius; }

@@ -16,13 +16,14 @@ namespace GameAI::FSM
 		void OnEnter() override;
 		void OnExit() override;
 		void Update(float deltaTime) override;
+
+		float SearchTimer{ 0.f };
+		float MaxSearchingTime{ 15.f };
 	private:
 		ASteeringAgent* Agent{ nullptr };
 		FVector LastKnownPosition;
-		float SearchTimer{ 0.f };
-		float MaxSearchingTime{ 5.f };
 		bool bHasReachedLastTargetPosition{ false };
-		std::unique_ptr<Wander> WanderBehavior;
 		float threshold{ 50.f };
+		float WanderTimer{ 0.f };
 	};
 }

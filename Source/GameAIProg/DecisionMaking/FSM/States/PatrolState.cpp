@@ -13,11 +13,18 @@ namespace GameAI::FSM
 	void PatrolState::OnEnter()
 	{
 		CurrentWaypointIndex = 0;
+
+		if (AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController()))
+		{
+			AIController->StopMovement();
+		}
+
+		Agent->SetSteeringBehavior(nullptr);
 	}
 
 	void PatrolState::OnExit()
 	{
-
+		Agent->SetSteeringBehavior(nullptr);
 	}
 
 	void PatrolState::Update(float deltaTime)
