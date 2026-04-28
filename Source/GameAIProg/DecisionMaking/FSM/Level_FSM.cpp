@@ -5,12 +5,16 @@
 
 #include "FSMComponent.h"
 #include "DecisionMaking/GameAIController.h"
+#include "DecisionMaking/ThiefAIController.h"
 
 #include "States/PatrolState.h"
 #include "States/ChaseState.h"
 #include "States/SearchState.h"
 
 #include "InputCoreTypes.h"
+
+#include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "Perception/AISense_Sight.h"
 
 // Sets default values
 ALevel_FSM::ALevel_FSM()
@@ -42,6 +46,18 @@ void ALevel_FSM::BeginPlay()
 	{
 		Thief->SetDebugRenderingEnabled(false);
 		Thief->GetCharacterMovement()->MaxWalkSpeed = 600.f;
+
+		UAIPerceptionStimuliSourceComponent* StimuliSource = NewObject<UAIPerceptionStimuliSourceComponent>(Thief);
+		StimuliSource->RegisterComponent();
+		StimuliSource->RegisterWithPerceptionSystem();
+		StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
+		//
+		AThiefAIController* ThiefController = GetWorld()->SpawnActor<AThiefAIController>(AThiefAIController::StaticClass());
+
+		if (ThiefController)
+		{
+			ThiefController->Possess(Thief);
+		}
 	}
 	
 	AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController());
@@ -96,64 +112,11 @@ void ALevel_FSM::BeginPlay()
 	}
 }
 
-bool ALevel_FSM::IsTargetVisible() const
-{
-	if (!Agent || !Thief)
-	{
-		return false;
-	}
-
-	float detectionRadius = 500.f;
-	float distance = FVector::Distance(Agent->GetActorLocation(), Thief->GetActorLocation());
-	
-	FVector YAxis = FVector(1, 0, 0);
-	FVector ZAxis = FVector(0, 1, 0);
-	DrawDebugCircle(GetWorld(), Agent->GetActorLocation(), detectionRadius, 32, FColor::Yellow, false, -1.f, 0, 2.f, YAxis, ZAxis);
-
-	if (distance > detectionRadius)
-	{
-		return false;
-	}
-
-	FHitResult hitResult;
-	FVector start = Agent->GetActorLocation();
-	FVector end = Thief->GetActorLocation();
-	GetWorld()->LineTraceSingleByChannel(hitResult, start, end, ECC_Visibility);
-
-	if (hitResult.bBlockingHit && hitResult.GetActor() != Thief)
-	{
-		DrawDebugLine(GetWorld(), start, end, FColor::Red);
-		return false;
-	}
-	else
-	{
-		DrawDebugLine(GetWorld(), start, end, FColor::Green);
-	}
-
-	return true;
-}
-
 // Called every frame
 void ALevel_FSM::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 	if (!Thief) return;
-
-	if (APlayerController* playerController = GetWorld()->GetFirstPlayerController())
-	{
-		if (playerController->WasInputKeyJustPressed(EKeys::LeftMouseButton))
-		{
-			FHitResult Hit;
-			playerController->GetHitResultUnderCursor(ECC_Visibility, false, Hit);
-			if (Hit.bBlockingHit && Thief)
-			{
-				if (AAIController* ThiefAI = Cast<AAIController>(Thief->GetController()))
-				{
-					ThiefAI->MoveToLocation(Hit.Location);
-				}
-			}
-		}
-	}
 }
 
