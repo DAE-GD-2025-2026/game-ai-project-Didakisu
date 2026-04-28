@@ -44,8 +44,9 @@ void ALevel_FSM::BeginPlay()
 		Thief->GetCharacterMovement()->MaxWalkSpeed = 600.f;
 	}
 	
-	//TODO
-	if (AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController()))
+	AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController());
+
+	if (AIController)
 	{
 		if (UFSMComponent* FSM = Cast<UFSMComponent>(AIController->GetBrainComponent()))
 		{
@@ -72,16 +73,17 @@ void ALevel_FSM::BeginPlay()
 			FSM->AddState(std::unique_ptr<GameAI::FSM::State>(chaseState));
 			FSM->AddState(std::unique_ptr<GameAI::FSM::State>(searchState));
 
-			FSM->AddTransition(patrolState, chaseState, [this]() -> bool {
-				return IsTargetVisible();
+			FSM->AddTransition(patrolState, chaseState, [AIController]() -> bool {
+				//return IsTargetVisible();
+				return AIController && AIController->CanSeeTarget();
 				});
 
-			FSM->AddTransition(chaseState, searchState, [this]() -> bool {
-				return !IsTargetVisible();
+			FSM->AddTransition(chaseState, searchState, [AIController]() -> bool {
+				return AIController && !AIController->CanSeeTarget();
 				});
 
-			FSM->AddTransition(searchState, chaseState, [this]() -> bool {
-				return IsTargetVisible();
+			FSM->AddTransition(searchState, chaseState, [AIController]() -> bool {
+				return AIController && AIController->CanSeeTarget();
 				});
 
 			FSM->AddTransition(searchState, patrolState, [searchState]()-> bool {
@@ -92,16 +94,6 @@ void ALevel_FSM::BeginPlay()
 			AIController->RunFiniteStateMachine();
 		}
 	}
-
-
-	////spawn thief
-	//Thief = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass,
-	//FVector{ -500, -500, 90 }, FRotator::ZeroRotator);
-
-	//if (Thief)
-	//{
-	//	Thief->SetDebugRenderingEnabled(false);
-	//}
 }
 
 bool ALevel_FSM::IsTargetVisible() const
@@ -127,9 +119,6 @@ bool ALevel_FSM::IsTargetVisible() const
 	FVector start = Agent->GetActorLocation();
 	FVector end = Thief->GetActorLocation();
 	GetWorld()->LineTraceSingleByChannel(hitResult, start, end, ECC_Visibility);
-
-	/*FColor RayColor = (hitResult.bBlockingHit && hitResult.GetActor() != Thief) ? FColor::Red : FColor::Green;
-	DrawDebugLine(GetWorld(), start, end, RayColor, false, -1.f, 0, 2.f);*/
 
 	if (hitResult.bBlockingHit && hitResult.GetActor() != Thief)
 	{
