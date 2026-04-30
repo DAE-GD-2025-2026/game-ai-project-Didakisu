@@ -31,11 +31,26 @@ void ALevel_FSM::BeginPlay()
 	//spawn guard
 	Agent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, 
 	FVector{0,0,90}, FRotator::ZeroRotator);
-	Agent->SetDebugRenderingEnabled(false);
 
 	if (Agent)
 	{
+		Agent->SetDebugRenderingEnabled(false);
 		Agent->GetCharacterMovement()->MaxWalkSpeed = 300.f;
+
+		UAIPerceptionStimuliSourceComponent* StimuliSource = NewObject<UAIPerceptionStimuliSourceComponent>(Agent);
+		if (StimuliSource)
+		{
+			StimuliSource->RegisterComponent();
+			StimuliSource->RegisterWithPerceptionSystem();
+			StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
+		}
+
+		AGameAIController* GuardController = GetWorld()->SpawnActor<AGameAIController>(AGameAIController::StaticClass());
+
+		if (GuardController)
+		{
+			GuardController->Possess(Agent);
+		}
 	}
 
 	//spawn thief
@@ -48,10 +63,13 @@ void ALevel_FSM::BeginPlay()
 		Thief->GetCharacterMovement()->MaxWalkSpeed = 600.f;
 
 		UAIPerceptionStimuliSourceComponent* StimuliSource = NewObject<UAIPerceptionStimuliSourceComponent>(Thief);
-		StimuliSource->RegisterComponent();
-		StimuliSource->RegisterWithPerceptionSystem();
-		StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
-		//
+		if (StimuliSource)
+		{
+			StimuliSource->RegisterComponent();
+			StimuliSource->RegisterWithPerceptionSystem();
+			StimuliSource->RegisterForSense(UAISense_Sight::StaticClass()); 
+		}
+
 		AThiefAIController* ThiefController = GetWorld()->SpawnActor<AThiefAIController>(AThiefAIController::StaticClass());
 
 		if (ThiefController)

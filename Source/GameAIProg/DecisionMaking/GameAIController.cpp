@@ -50,6 +50,7 @@ void AGameAIController::BeginPlay()
 	// Create Blackboard if need be
 	InitFiniteStateMachine();
 
+	//bind perception
 	if (AIPerceptionComponent)
 	{
 		AIPerceptionComponent->OnTargetPerceptionUpdated.AddDynamic(this, &AGameAIController::OnTargetPerceptionUpdated);
