@@ -1,8 +1,11 @@
 #include "ThiefAIController.h"
 #include "Perception/AIPerceptionStimuliSourceComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "FSM/FSMComponent.h"
 
 AThiefAIController::AThiefAIController()
 {
+	BrainComponent = CreateDefaultSubobject<UFSMComponent>(TEXT("FSMComponent"));;
 	AIPerceptionComponent = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerception"));
 	UAISenseConfig_Sight* SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
 
@@ -30,8 +33,6 @@ void AThiefAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	GetWorldTimerManager().SetTimer(MoveTimer, this, &AThiefAIController::MoveRandomly, 1.5f, true);
-
 	//bind perception
 	if (AIPerceptionComponent)
 	{
@@ -39,40 +40,42 @@ void AThiefAIController::BeginPlay()
 	}
 }
 
-void AThiefAIController::MoveRandomly()
+void AThiefAIController::InitFiniteStateMachine()
 {
-	APawn* ControlledPawn = GetPawn();
-	if (!ControlledPawn)
+	UFSMComponent* FSMComp = FindComponentByClass<UFSMComponent>();
+	if (ensure(FSMComp) && FSMBlackboardAsset)
 	{
-		return;
+		UBlackboardComponent* BlackboardComp = Blackboard;
+		UseBlackboard(FSMBlackboardAsset, BlackboardComp);
+		Blackboard = BlackboardComp;
 	}
+}
 
-	FVector Origin = ControlledPawn->GetActorLocation();
-
-	FVector RandomOffset = FVector(FMath::RandRange(-800.f, 800.f), FMath::RandRange(-800.f, 800.f), 0.f);
-
-	FVector Destination = Origin + RandomOffset;
-	MoveToLocation(Destination);
+void AThiefAIController::RunFiniteStateMachine()
+{
+	UFSMComponent* FSMComp = FindComponentByClass<UFSMComponent>();
+	if (ensure(FSMComp))
+	{
+		FSMComp->StartLogic();
+	}
 }
 
 void AThiefAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
-	if (!Actor)
-	{
-		return;
-	}
-
-	if (Actor == GetPawn())
+	if (!Actor || Actor == GetPawn())
 	{
 		return;
 	}
 
 	if (Stimulus.WasSuccessfullySensed())
 	{
-		bIsGuardDetected = true;
+		CurrentTarget = Actor;
 	}
 	else
 	{
-		bIsGuardDetected = false;
+		if (CurrentTarget == Actor)
+		{
+			CurrentTarget = nullptr;
+		}
 	}
 }

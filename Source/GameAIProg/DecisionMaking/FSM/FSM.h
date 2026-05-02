@@ -57,7 +57,7 @@ namespace GameAI::FSM
 
 		void Update(float deltaTime)
 		{
-			CurrentState->Update(deltaTime);
+			//CurrentState->Update(deltaTime);
 
 			for (int i = 0; i < Transitions.size(); i++)
 			{
@@ -72,6 +72,9 @@ namespace GameAI::FSM
 					}
 				}
 			}
+
+			CurrentState->Update(deltaTime);
+
 		}
 	private:
 		std::vector<std::unique_ptr<State>> States{};

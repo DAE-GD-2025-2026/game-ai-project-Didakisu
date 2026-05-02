@@ -2,7 +2,7 @@
 
 
 #include "GameAIController.h"
-
+#include "Movement/SteeringBehaviors/SteeringAgent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "FSM/FSMComponent.h"
 
@@ -20,16 +20,16 @@ AGameAIController::AGameAIController()
 	if (SightConfig)
 	{
 		//how far the guard sees
-		SightConfig->SightRadius = 800.f;
+		SightConfig->SightRadius = SightRadius;
 
 		//at what distance does the guard loses sight
-		SightConfig->LoseSightRadius = 1000.f;
+		SightConfig->LoseSightRadius = LoseSightRadius;
 
 		//FOV
 		SightConfig->PeripheralVisionAngleDegrees = 90.f;
 
-		SightConfig->SetMaxAge(2.0f);
-		SightConfig->AutoSuccessRangeFromLastSeenLocation = 50.f;
+		SightConfig->SetMaxAge(5.0f);
+		//SightConfig->AutoSuccessRangeFromLastSeenLocation = 50.f;
 
 		SightConfig->DetectionByAffiliation.bDetectEnemies = true;
 		SightConfig->DetectionByAffiliation.bDetectFriendlies = true;
@@ -44,12 +44,10 @@ AGameAIController::AGameAIController()
 
 // Called when the game starts or when spawned
 void AGameAIController::BeginPlay()
-{
+{	
 	Super::BeginPlay();
-	
 	// Create Blackboard if need be
-	InitFiniteStateMachine();
-
+	
 	//bind perception
 	if (AIPerceptionComponent)
 	{
@@ -57,10 +55,28 @@ void AGameAIController::BeginPlay()
 	}
 }
 
+void AGameAIController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	InitFiniteStateMachine();
+}
+
 // Called every frame
 void AGameAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (!GetPawn())
+	{
+		return;
+	}
+
+	const FVector Center = GetPawn()->GetActorLocation();
+	FVector yAxis = FVector(1, 0, 0);
+	FVector zAxis = FVector(0, 1, 0);
+
+	DrawDebugCircle(GetWorld(), Center, SightRadius ,32 ,FColor::Green ,false , -1.0f, 0 ,0.f, yAxis, zAxis);
+	DrawDebugCircle(GetWorld(), Center, LoseSightRadius, 32, FColor::Red, false, -1.0f , 0, 0.f, yAxis, zAxis);
 }
 
 void AGameAIController::InitFiniteStateMachine()
@@ -84,26 +100,35 @@ void AGameAIController::RunFiniteStateMachine()
 }
 
 void AGameAIController::OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
-{
-	if (!Actor)
-	{
-		return;
-	}
-
-	if (Actor == GetPawn())
-	{
-		return;
-	}
+{ 
+	if (!Actor) return;
+	if (!Actor->ActorHasTag(FName("Thief"))) return;
+	if (GetPawn() && Actor == GetPawn()) return;
 
 	if (Stimulus.WasSuccessfullySensed())
 	{
 		CurrentTarget = Actor;
+		if (Blackboard)
+		{
+			Blackboard->SetValueAsBool("CanSeeTarget", true); 
+			Blackboard->SetValueAsVector("LastKnownPos", Actor->GetActorLocation());
+		}
 	}
 	else
 	{
 		if (CurrentTarget == Actor)
 		{
+			if (Blackboard)
+			{
+				Blackboard->SetValueAsVector("LastKnownPos", Actor->GetActorLocation());
+				Blackboard->SetValueAsBool("CanSeeTarget", false);
+			}
 			CurrentTarget = nullptr;
 		}
 	}
+}
+
+FORCEINLINE bool AGameAIController::CanSeeTarget() const
+{
+	return Blackboard && Blackboard->GetValueAsBool("CanSeeTarget");
 }

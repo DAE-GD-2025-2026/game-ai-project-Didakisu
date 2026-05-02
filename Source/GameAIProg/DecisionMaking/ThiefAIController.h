@@ -18,19 +18,24 @@ class GAMEAIPROG_API AThiefAIController : public AAIController
     GENERATED_BODY()
 
 public:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI|FSM")
+    TObjectPtr<UBlackboardData> FSMBlackboardAsset;
+
     AThiefAIController();
 
-    virtual void BeginPlay() override;
     UFUNCTION()
     void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
-
-	FORCEINLINE bool IsGuardDetected() const { return bIsGuardDetected; }
+    void RunFiniteStateMachine();
+	FORCEINLINE bool IsGuardDetected() const { return CurrentTarget != nullptr; }
+protected:
+    virtual void BeginPlay() override;
+    void InitFiniteStateMachine();
 private:
-    void MoveRandomly();
+    //void MoveRandomly();
     FTimerHandle MoveTimer;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
     UAIPerceptionComponent* AIPerceptionComponent;
 
-    bool bIsGuardDetected = false;
+    AActor* CurrentTarget;
 };

@@ -10,6 +10,10 @@
 #include "States/PatrolState.h"
 #include "States/ChaseState.h"
 #include "States/SearchState.h"
+#include "States/WanderState.h"
+#include "States/FleeState.h"
+
+#include "BehaviorTree/BlackboardData.h"
 
 #include "InputCoreTypes.h"
 
@@ -23,14 +27,35 @@ ALevel_FSM::ALevel_FSM()
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-// Called when the game starts or when spawned
 void ALevel_FSM::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	UBlackboardData* BBAsset = LoadObject<UBlackboardData>(nullptr, TEXT("/Game/DecisionMaking/BB_TEST.BB_TEST"));
+
+	//spawn thief first
+	Thief = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass,
+		FVector{ -500, -500, 90 }, FRotator::ZeroRotator);
+
+	if (Thief)
+	{
+		//tag thief (for perception)
+		Thief->Tags.Add(FName("Thief"));
+		Thief->SetDebugRenderingEnabled(false);
+		Thief->GetCharacterMovement()->MaxWalkSpeed = 600.f;
+
+		UAIPerceptionStimuliSourceComponent* StimuliSource = NewObject<UAIPerceptionStimuliSourceComponent>(Thief);
+		if (StimuliSource)
+		{
+			StimuliSource->RegisterComponent();
+			StimuliSource->RegisterWithPerceptionSystem();
+			StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
+		}
+	}
+
 	//spawn guard
-	Agent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, 
-	FVector{0,0,90}, FRotator::ZeroRotator);
+	Agent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass,
+		FVector{ 0,0,90 }, FRotator::ZeroRotator);
 
 	if (Agent)
 	{
@@ -45,87 +70,85 @@ void ALevel_FSM::BeginPlay()
 			StimuliSource->RegisterForSense(UAISense_Sight::StaticClass());
 		}
 
+		//guard controller  
 		AGameAIController* GuardController = GetWorld()->SpawnActor<AGameAIController>(AGameAIController::StaticClass());
 
 		if (GuardController)
 		{
-			GuardController->Possess(Agent);
-		}
-	}
-
-	//spawn thief
-	Thief = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass,
-		FVector{ -500, -500, 90 }, FRotator::ZeroRotator);
-
-	if (Thief)
-	{
-		Thief->SetDebugRenderingEnabled(false);
-		Thief->GetCharacterMovement()->MaxWalkSpeed = 600.f;
-
-		UAIPerceptionStimuliSourceComponent* StimuliSource = NewObject<UAIPerceptionStimuliSourceComponent>(Thief);
-		if (StimuliSource)
-		{
-			StimuliSource->RegisterComponent();
-			StimuliSource->RegisterWithPerceptionSystem();
-			StimuliSource->RegisterForSense(UAISense_Sight::StaticClass()); 
-		}
-
-		AThiefAIController* ThiefController = GetWorld()->SpawnActor<AThiefAIController>(AThiefAIController::StaticClass());
-
-		if (ThiefController)
-		{
-			ThiefController->Possess(Thief);
-		}
-	}
-	
-	AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController());
-
-	if (AIController)
-	{
-		if (UFSMComponent* FSM = Cast<UFSMComponent>(AIController->GetBrainComponent()))
-		{
-
-			TArray<FVector> PatrolPath =
+			if (BBAsset)
 			{
-				FVector(100, 0, 90),
-				FVector(400, 200, 90),
-				FVector(300, 600, 90),
-				FVector(-200, 400, 90)
-			};
-
-			//debug
-			for (const FVector& Point : PatrolPath)
-			{
-				DrawDebugSphere(GetWorld(), Point, 50.f, 12, FColor::Magenta, true, -1.f, 0, 5.f);
+				GuardController->FSMBlackboardAsset = BBAsset;
 			}
 
-			auto* patrolState = new GameAI::FSM::PatrolState(Agent, PatrolPath);
-			auto* chaseState = new GameAI::FSM::ChaseState(Agent, Thief);
-			auto* searchState = new GameAI::FSM::SearchState(Agent);
+			GuardController->SetTargetActor(Thief);
+			GuardController->Possess(Agent);
 
-			FSM->AddState(std::unique_ptr<GameAI::FSM::State>(patrolState));
-			FSM->AddState(std::unique_ptr<GameAI::FSM::State>(chaseState));
-			FSM->AddState(std::unique_ptr<GameAI::FSM::State>(searchState));
+			//guard FSM setup
+			if (UFSMComponent* FSM = Cast<UFSMComponent>(GuardController->GetBrainComponent()))
+			{
+				TArray<FVector> PatrolPath =
+				{
+					FVector(100, 0, 90),
+					FVector(400, 200, 90),
+					FVector(300, 600, 90),
+					FVector(-200, 400, 90)
+				};
 
-			FSM->AddTransition(patrolState, chaseState, [AIController]() -> bool {
-				//return IsTargetVisible();
-				return AIController && AIController->CanSeeTarget();
-				});
+				for (const FVector& Point : PatrolPath)
+				{
+					DrawDebugSphere(GetWorld(), Point, 50.f, 12, FColor::Magenta, true, -1.f, 0, 5.f);
+				}
 
-			FSM->AddTransition(chaseState, searchState, [AIController]() -> bool {
-				return AIController && !AIController->CanSeeTarget();
-				});
+				auto* patrolState = new GameAI::FSM::PatrolState(Agent, PatrolPath);
+				auto* chaseState = new GameAI::FSM::ChaseState(Agent, Thief);
+				auto* searchState = new GameAI::FSM::SearchState(Agent);
 
-			FSM->AddTransition(searchState, chaseState, [AIController]() -> bool {
-				return AIController && AIController->CanSeeTarget();
-				});
+				searchState->Blackboard = GuardController->GetBlackboardComponent();
 
-			FSM->AddTransition(searchState, patrolState, [searchState]()-> bool {
-				return searchState->SearchTimer > searchState->MaxSearchingTime;
-				});
+				FSM->AddState(std::unique_ptr<GameAI::FSM::State>(patrolState));
+				FSM->AddState(std::unique_ptr<GameAI::FSM::State>(chaseState));
+				FSM->AddState(std::unique_ptr<GameAI::FSM::State>(searchState));
 
+				FSM->AddTransition(patrolState, chaseState, [GuardController]() -> bool {
+					return GuardController && GuardController->CanSeeTarget();
+					});
 
-			AIController->RunFiniteStateMachine();
+				FSM->AddTransition(chaseState, searchState, [GuardController, chaseState]() -> bool {
+					return GuardController && !GuardController->CanSeeTarget() && chaseState->ChaseTimer >= chaseState->MinChaseTime;
+					});
+
+				FSM->AddTransition(searchState, chaseState, [GuardController]() -> bool {
+					bool result = GuardController && GuardController->CanSeeTarget();
+					UE_LOG(LogTemp, Warning, TEXT("SearchToChase: %d"), result);
+					return result;
+					});
+
+				FSM->AddTransition(searchState, patrolState, [searchState]() -> bool {
+					return searchState->SearchTimer > searchState->MaxSearchingTime;
+					});
+
+				GuardController->RunFiniteStateMachine();
+			}
+		}
+	}
+
+	//thief controller
+	AThiefAIController* ThiefController = GetWorld()->SpawnActor<AThiefAIController>(AThiefAIController::StaticClass());
+
+	if (ThiefController)
+	{
+		ThiefController->Possess(Thief);
+	}
+
+	AThiefAIController* ThiefAIController = Cast<AThiefAIController>(Thief->GetController());
+
+	if (ThiefAIController)
+	{
+		if (UFSMComponent* FSM = Cast<UFSMComponent>(ThiefAIController->GetBrainComponent()))
+		{
+			auto* wanderState = new GameAI::FSM::WanderState(Thief);
+			FSM->AddState(std::unique_ptr<GameAI::FSM::State>(wanderState));
+			ThiefAIController->RunFiniteStateMachine();
 		}
 	}
 }

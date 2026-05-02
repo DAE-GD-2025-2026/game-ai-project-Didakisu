@@ -11,13 +11,11 @@ GameAI::FSM::SearchState::SearchState(ASteeringAgent* Agent):
 
 void GameAI::FSM::SearchState::OnEnter()
 {
+    UE_LOG(LogTemp, Warning, TEXT("SEARCH ENTER")); 
+
 	SearchTimer = 0.f;
 	bHasReachedLastTargetPosition = false;
-
-	if (Blackboard)
-	{
-		LastKnownPosition = Blackboard->GetValueAsVector("LastKnownPos");
-	}
+    LastKnownPosition = FVector::ZeroVector;
 }
 
 void GameAI::FSM::SearchState::OnExit()
@@ -31,11 +29,22 @@ void GameAI::FSM::SearchState::Update(float deltaTime)
 
     if (AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController()))
     {
+        if (!Blackboard)
+        {
+            Blackboard = AIController->GetBlackboardComponent();
+        }
+
+        if (LastKnownPosition == FVector::ZeroVector && Blackboard)
+        {
+            LastKnownPosition = Blackboard->GetValueAsVector("LastKnownPos");
+        }
+
+        float distance = FVector::Distance(Agent->GetActorLocation(), LastKnownPosition);
+
         if (!bHasReachedLastTargetPosition)
         {
             AIController->MoveToLocation(LastKnownPosition);
 
-            float distance = FVector::Distance(Agent->GetActorLocation(), LastKnownPosition);
             if (distance < threshold)
             {
                 bHasReachedLastTargetPosition = true;
@@ -49,8 +58,7 @@ void GameAI::FSM::SearchState::Update(float deltaTime)
             if (WanderTimer > 2.f)
             {
                 FVector RandomOffset = FVector(FMath::RandRange(-400.f, 400.f), FMath::RandRange(-400.f, 400.f), 0.f);
-                FVector WanderTarget = LastKnownPosition + RandomOffset;
-                AIController->MoveToLocation(WanderTarget);
+                AIController->MoveToLocation(LastKnownPosition + RandomOffset);
                 WanderTimer = 0.f;
             }
         }

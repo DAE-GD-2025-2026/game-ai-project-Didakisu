@@ -11,6 +11,7 @@ GameAI::FSM::ChaseState::ChaseState(ASteeringAgent* Agent, ASteeringAgent* Targe
 void GameAI::FSM::ChaseState::OnEnter()
 {
 	Agent->SetSteeringBehavior(nullptr);
+	ChaseTimer = 0.f;
 }
 
 void GameAI::FSM::ChaseState::OnExit()
@@ -23,6 +24,7 @@ void GameAI::FSM::ChaseState::OnExit()
 
 void GameAI::FSM::ChaseState::Update(float deltaTime)
 {
+	ChaseTimer += deltaTime;
 	if (AGameAIController* AIController = Cast<AGameAIController>(Agent->GetController()))
 	{
 		AIController->MoveToLocation(Target->GetActorLocation());

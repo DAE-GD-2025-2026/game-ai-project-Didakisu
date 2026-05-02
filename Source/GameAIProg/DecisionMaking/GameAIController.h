@@ -29,15 +29,23 @@ public:
 
 	UFUNCTION()
 	void OnTargetPerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
-	FORCEINLINE bool CanSeeTarget() const { return CurrentTarget != nullptr; }
+	FORCEINLINE bool CanSeeTarget() const;
+
+	void SetTargetActor(AActor* Target) { TargetActor = Target; }
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	void InitFiniteStateMachine();
+	//
+	virtual void OnPossess(APawn* InPawn) override;
 	
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI", meta = (AllowPrivateAccess = "true"))
 	UAIPerceptionComponent* AIPerceptionComponent;
 
 	AActor* CurrentTarget;
+	float SightRadius = 1000.f;
+	float LoseSightRadius = 1200.f;
+
+	AActor* TargetActor = nullptr;
 };

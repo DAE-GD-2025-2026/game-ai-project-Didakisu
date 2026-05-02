@@ -6,19 +6,21 @@ class ASteeringAgent;
 
 namespace GameAI::FSM
 {
-	class ChaseState : public State
+	class WanderState : public State
 	{
 	public:
-		ChaseState(ASteeringAgent* Agent, ASteeringAgent* Target);
+		WanderState(ASteeringAgent* Agent);
 
 		void OnEnter() override;
 		void OnExit() override;
 		void Update(float deltaTime) override;
 
-		float ChaseTimer = 0.f;
-		float MinChaseTime = 2.0f;
 	private:
 		ASteeringAgent* Agent{ nullptr };
-		ASteeringAgent* Target{ nullptr };
+
+		FVector CurrentDestination;
+		bool bHasDestination = false;
+		float TimeSinceLastRepath = 0.f;
+		float RepathInterval = 0.5f;
 	};
 }

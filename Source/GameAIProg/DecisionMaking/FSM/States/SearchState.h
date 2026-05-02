@@ -4,7 +4,6 @@
 #include "Movement/SteeringBehaviors/Steering/SteeringBehaviors.h"
 
 class ASteeringAgent;
-//class Wander;
 
 namespace GameAI::FSM
 {
@@ -23,7 +22,7 @@ namespace GameAI::FSM
 		ASteeringAgent* Agent{ nullptr };
 		FVector LastKnownPosition;
 		bool bHasReachedLastTargetPosition{ false };
-		float threshold{ 50.f };
+		float threshold{ 150.f };
 		float WanderTimer{ 0.f };
 	};
 }
