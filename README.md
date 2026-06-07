@@ -17,3 +17,6 @@ First builds a list of portals (the edges to cross between consecutive nodes) an
 they are consistently oriented. Then walks through them maintaining a funnel of two legs 
 (left and right) from an apex point, tightening it at each portal. When a new portal crosses 
 over the opposite leg, the funnel collapses, a waypoint is added, and the funnel resets.
+
+## Extra Assignment
+I decided to make Jump Point Search algorithm, which is an extra assignment from Week 5 - Pathfinding Algorithms
