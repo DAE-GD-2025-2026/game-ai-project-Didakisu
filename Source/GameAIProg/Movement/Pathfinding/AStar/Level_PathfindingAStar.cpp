@@ -5,6 +5,7 @@
 
 #include "GraphTheory/Algorithms/AStar.h"
 #include "GraphTheory/Algorithms/BFS.h"
+#include "GraphTheory/Algorithms/JPS.h"
 #include "GraphTheory/Algorithms/Heuristics.h"
 #include "Shared/GameAISpectator.h"
 
@@ -116,7 +117,9 @@ void ALevel_PathfindingAStar::CalculatePath()
 		//Select (uncomment) BFS Pathfinding or A* Pathfinding
 		
 		//BFS pathfinder = BFS(TerrainGraph);
-		AStar pathfinder = AStar(TerrainGraph, HeuristicFunction);
+		//AStar pathfinder = AStar(TerrainGraph, HeuristicFunction);
+		JPS pathfinder = JPS(TerrainGraph, HeuristicFunction);
+
 		TerrainNode* const startNode = TerrainGraph->GetNodeAs<TerrainNode>(PathStartNodeId);
 		TerrainNode* const endNode = TerrainGraph->GetNodeAs<TerrainNode>(PathEndNodeId);
 

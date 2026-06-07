@@ -21,6 +21,6 @@ namespace GameAI::FSM
 		FVector CurrentDestination;
 		bool bHasDestination = false;
 		float TimeSinceLastRepath = 0.f;
-		float RepathInterval = 0.5f;
+		float RepathInterval = 2.0f;
 	};
 }

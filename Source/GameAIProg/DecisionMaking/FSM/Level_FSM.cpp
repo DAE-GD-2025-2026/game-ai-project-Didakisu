@@ -42,7 +42,7 @@ void ALevel_FSM::BeginPlay()
 		//tag thief (for perception)
 		Thief->Tags.Add(FName("Thief"));
 		Thief->SetDebugRenderingEnabled(false);
-		Thief->GetCharacterMovement()->MaxWalkSpeed = 600.f;
+		Thief->GetCharacterMovement()->MaxWalkSpeed = 500.f;
 
 		UAIPerceptionStimuliSourceComponent* StimuliSource = NewObject<UAIPerceptionStimuliSourceComponent>(Thief);
 		if (StimuliSource)
@@ -54,8 +54,7 @@ void ALevel_FSM::BeginPlay()
 	}
 
 	//spawn guard
-	Agent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass,
-		FVector{ 0,0,90 }, FRotator::ZeroRotator);
+	Agent = GetWorld()->SpawnActor<ASteeringAgent>(SteeringAgentClass, FVector{ 0,0,90 }, FRotator::ZeroRotator);
 
 	if (Agent)
 	{
@@ -119,7 +118,6 @@ void ALevel_FSM::BeginPlay()
 
 				FSM->AddTransition(searchState, chaseState, [GuardController]() -> bool {
 					bool result = GuardController && GuardController->CanSeeTarget();
-					UE_LOG(LogTemp, Warning, TEXT("SearchToChase: %d"), result);
 					return result;
 					});
 
@@ -147,17 +145,29 @@ void ALevel_FSM::BeginPlay()
 		if (UFSMComponent* FSM = Cast<UFSMComponent>(ThiefAIController->GetBrainComponent()))
 		{
 			auto* wanderState = new GameAI::FSM::WanderState(Thief);
+			auto* fleeState = new GameAI::FSM::FleeState(Thief, Agent);
+
 			FSM->AddState(std::unique_ptr<GameAI::FSM::State>(wanderState));
+			FSM->AddState(std::unique_ptr<GameAI::FSM::State>(fleeState));
+
+			FSM->AddTransition(wanderState, fleeState, [ThiefAIController]() -> bool 
+				{
+					return ThiefAIController && ThiefAIController->IsGuardDetected();
+				});
+
+			FSM->AddTransition(fleeState, wanderState, [ThiefAIController]() -> bool 
+				{
+					return ThiefAIController && !ThiefAIController->IsGuardDetected();
+				});
+
 			ThiefAIController->RunFiniteStateMachine();
 		}
 	}
 }
 
-// Called every frame
 void ALevel_FSM::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 	if (!Thief) return;
 }
-

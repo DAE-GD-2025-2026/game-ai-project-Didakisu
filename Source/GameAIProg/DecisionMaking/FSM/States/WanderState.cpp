@@ -37,12 +37,10 @@ void GameAI::FSM::WanderState::Update(float deltaTime)
 
 	FVector Origin = Agent->GetActorLocation();
 
-	// refresh destination frequently instead of once per arrival
 	if (TimeSinceLastRepath >= RepathInterval || !bHasDestination)
 	{
 		TimeSinceLastRepath = 0.f;
 
-		// small directional jitter instead of full random jump
 		FVector Forward = Agent->GetActorForwardVector();
 		FVector Random = FMath::VRand() * 0.6f + Forward * 0.4f;
 		Random.Z = 0.f;
@@ -58,7 +56,7 @@ void GameAI::FSM::WanderState::Update(float deltaTime)
 	}
 
 	float Dist = FVector::Dist(Origin, CurrentDestination);
-	if (Dist < 60.f)
+	if (Dist < 100.f)
 	{
 		bHasDestination = false;
 	}
